@@ -3540,7 +3540,7 @@ IMPLEMENT_RMI(CActor, SvRequestDropItem)
 		return false;
 	}
 
-	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->IsRMILegitimate(pNetChannel, pItem->GetOwnerId())) {
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsRMILegitimate(pNetChannel, pItem->GetOwnerId())) {
 		return true;
 	}
 

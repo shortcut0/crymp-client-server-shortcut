@@ -771,7 +771,7 @@ void CGameRules::ProcessExplosionMaterialFX(const ExplosionInfo& explosionInfo)
 //------------------------------------------------------------------------
 IMPLEMENT_RMI(CGameRules, SvRequestRename)
 {
-	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->IsRMILegitimate(pNetChannel, params.entityId)) {
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsRMILegitimate(pNetChannel, params.entityId)) {
 		return true;
 	}
 
@@ -820,7 +820,7 @@ IMPLEMENT_RMI(CGameRules, ClRenameEntity)
 //------------------------------------------------------------------------
 IMPLEMENT_RMI(CGameRules, SvRequestChatMessage)
 {
-	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->IsRMILegitimate(pNetChannel, params.sourceId)) {
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsRMILegitimate(pNetChannel, params.sourceId)) {
 		return true;
 	}
 	SendChatMessage((EChatMessageType)params.type, params.sourceId, params.targetId, params.msg.c_str());
@@ -868,7 +868,7 @@ IMPLEMENT_RMI(CGameRules, ClRadioMessage)
 //------------------------------------------------------------------------
 IMPLEMENT_RMI(CGameRules, SvRequestChangeTeam)
 {
-	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->IsRMILegitimate(pNetChannel, params.entityId)) {
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsRMILegitimate(pNetChannel, params.entityId)) {
 		return true;
 	}
 
@@ -884,7 +884,7 @@ IMPLEMENT_RMI(CGameRules, SvRequestChangeTeam)
 //------------------------------------------------------------------------
 IMPLEMENT_RMI(CGameRules, SvRequestSpectatorMode)
 {
-	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->IsRMILegitimate(pNetChannel, params.entityId)) {
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsRMILegitimate(pNetChannel, params.entityId)) {
 		return true;
 	}
 
@@ -972,7 +972,7 @@ IMPLEMENT_RMI(CGameRules, SvRequestHit)
 	HitInfo info(params);
 	info.remote = true;
 
-	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->IsHitRMILegitimate(pNetChannel, info.shooterId, info.weaponId)) {
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsHitRMILegitimate(pNetChannel, info.shooterId, info.weaponId)) {
 		return true;
 	}
 
