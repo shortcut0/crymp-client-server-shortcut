@@ -552,6 +552,9 @@ add_library(Base OBJECT
 	Code/CryMP/Common/HTTPClient.h
 	Code/CryMP/Server/Server.cpp
 	Code/CryMP/Server/Server.h
+	Code/CryMP/Server/SSM.h
+	Code/CryMP/Server/SafeWriting/SafeWriting.h
+	Code/CryMP/Server/SafeWriting/SafeWriting.cpp
 	Code/CryScriptSystem/LuaLibs/bitlib.c
 	Code/CryScriptSystem/ScriptBindings/ScriptBindings.cpp
 	Code/CryScriptSystem/ScriptBindings/ScriptBindings.h

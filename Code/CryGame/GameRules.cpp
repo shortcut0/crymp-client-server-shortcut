@@ -49,6 +49,7 @@
 #include "CryMP/Client/WeatherSystem.h"
 #include "CryMP/Client/Advertising.h"
 #include "CryMP/Client/HealthManager.h"
+#include "CryMP/Server/SSM.h"
 
 int CGameRules::s_invulnID = 0;
 int CGameRules::s_barbWireID = 0;
@@ -604,6 +605,10 @@ bool CGameRules::OnClientConnect(int channelId, bool isReset)
 		}
 	}
 
+	if(ISSM* pSSM = g_pGame->GetSSM()) {
+		pSSM->OnClientConnect(this, channelId, isReset);
+	}
+
 	return pActor != 0;
 }
 
@@ -1091,7 +1096,17 @@ void CGameRules::RevivePlayerInVehicle(CActor* pActor, EntityId vehicleId, int s
 //------------------------------------------------------------------------
 void CGameRules::RenamePlayer(CActor* pActor, const char* name)
 {
-	string fixed = VerifyName(name, pActor->GetEntity());
+	std::string strName { name };
+	if(ISSM* pSSM = g_pGame->GetSSM()) {
+		auto newName = pSSM->OnPlayerRename(this, pActor, strName);
+		if(newName) {
+			strName = std::move(*newName);
+		} else {
+			return;
+		}
+	}
+
+	string fixed = VerifyName(strName.c_str(), pActor->GetEntity());
 	RenameEntityParams params(pActor->GetEntityId(), fixed.c_str());
 	if (!_stricmp(fixed.c_str(), pActor->GetEntity()->GetName()))
 		return;
@@ -3197,6 +3212,16 @@ void CGameRules::SendChatMessage(EChatMessageType type, EntityId sourceId, Entit
 
 	if (gEnv->bServer)
 	{
+		// SSM: OnChatMessage
+		if(ISSM* pSSM = g_pGame->GetSSM()) {
+			auto newMsg = pSSM->OnChatMessage(this, type, sourceId, targetId, msg);
+			if(newMsg) {
+				params.msg = newMsg->c_str();
+			} else {
+				return;
+			}
+		}
+
 		switch (type)
 		{
 		case eChatToTarget:

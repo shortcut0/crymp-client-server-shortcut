@@ -92,6 +92,11 @@ ScriptBind_CPPAPI::ScriptBind_CPPAPI()
 	SCRIPT_REG_TEMPLFUNC(IsActionFilterEnabled, "filterName");
 	SCRIPT_REG_TEMPLFUNC(IsActionFilterAvailable, "filterName");
 	SCRIPT_REG_TEMPLFUNC(CreateActionFilter, "filterName, actions");
+
+	//SSM support
+	SCRIPT_REG_TEMPLFUNC(GetIP, "host");
+	SCRIPT_REG_TEMPLFUNC(GetLocalIP, "");
+	SCRIPT_REG_TEMPLFUNC(GetTime, "future");
 }
 
 ScriptBind_CPPAPI::~ScriptBind_CPPAPI()
@@ -1099,4 +1104,20 @@ int ScriptBind_CPPAPI::CreateActionFilter(IFunctionHandler* pH, const char* name
 
 	CryLogWarningAlways("CPPAPI.CreateActionFilter: no valid actions found in the table");
 	return pH->EndFunction(false);
+}
+
+int ScriptBind_CPPAPI::GetIP(IFunctionHandler* pH, const char* host) {
+	return pH->EndFunction(WinAPI::GetIP(host).c_str());
+}
+
+int ScriptBind_CPPAPI::GetLocalIP(IFunctionHandler* pH) {
+	return pH->EndFunction(WinAPI::GetLocalIP().c_str());
+}
+
+int ScriptBind_CPPAPI::GetTime(IFunctionHandler* pH, int future) {
+	time_t t = time(0) + future;
+	tm *info = localtime(&t);
+	static char bf[64];
+	sprintf(bf, "%04d%02d%02d%02d%02d%02d", info->tm_year + 1900, info->tm_mon + 1, info->tm_mday, info->tm_hour, info->tm_min, info->tm_sec);
+	return pH->EndFunction(bf);
 }

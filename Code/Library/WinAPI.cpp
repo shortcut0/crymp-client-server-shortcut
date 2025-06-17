@@ -1097,3 +1097,34 @@ void WinAPI::Window::ConvertPosToScreen(void* window, long& x, long& y)
 	x = point.x;
 	y = point.y;
 }
+
+std::string WinAPI::GetLocalIP() {
+	char hostn[255];
+	if (gethostname(hostn, sizeof(hostn)) != SOCKET_ERROR) {
+		struct hostent *host = gethostbyname(hostn);
+		if (host != NULL) {
+			for (int i = 0; host->h_addr_list[i] != 0; ++i) {
+				struct in_addr addr;
+				memcpy(&addr, host->h_addr_list[i], sizeof(struct in_addr));
+				return inet_ntoa(addr);
+			}
+		}
+	}
+	return "192.168.1.1";
+}
+
+std::string WinAPI::GetIP(const std::string& hostName) {
+	std::string host { hostName };
+	if(size_t pos = host.find(':'); pos != std::string::npos) {
+		host = host.substr(0, pos);
+	}
+	
+	in_addr iaddr;
+	hostent *result = gethostbyname(host.c_str());
+	if(result == NULL) {
+		return host;
+	} else {
+		iaddr.s_addr=*(unsigned long*)result->h_addr;
+		return inet_ntoa(iaddr);
+	}
+}
