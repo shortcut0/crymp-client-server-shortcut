@@ -49,7 +49,9 @@
 #include "CryMP/Client/WeatherSystem.h"
 #include "CryMP/Client/Advertising.h"
 #include "CryMP/Client/HealthManager.h"
+
 #include "CryMP/Server/SSM.h"
+#include "CryMP/Server/SafeWriting/SafeWriting.h"
 
 int CGameRules::s_invulnID = 0;
 int CGameRules::s_barbWireID = 0;
@@ -222,6 +224,13 @@ void CGameRules::PostInit(IGameObject* pGameObject)
 	if (gClient)
 	{
 		gClient->GetScriptCallbacks()->OnGameRulesCreated(GetEntityId());
+	}
+
+	if (gEnv->bServer) {
+		string activeSSM { g_pGameCVars->mp_ssmCVar->GetString() };
+		if (activeSSM == "SafeWriting") {
+			g_pGame->SetSSM(new CSafeWriting());
+		}
 	}
 }
 

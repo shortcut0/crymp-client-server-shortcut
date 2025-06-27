@@ -165,7 +165,8 @@ public:
 	CWeatherSystem* GetWeatherSystem() const { return m_pWeatherSystem; }
 	CAdManager* GetAdManager() const { return m_pAdManager; }
 	CHealthManager* GetHealthManager() const { return m_pHealthManager;  }
-	ISSM* GetSSM() const { if(!gEnv->bServer) return NULL; else return m_ssm; }
+	ISSM* GetSSM() const { if (!gEnv->bServer) return NULL; else return m_ssm; }
+	void SetSSM(ISSM* pSSM) { if (gEnv->bServer) m_ssm = pSSM; }
 
 	CGameActions&	Actions() const {	return *m_pGameActions;	};
 

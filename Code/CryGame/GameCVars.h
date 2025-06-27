@@ -472,6 +472,8 @@ struct SCVars
 	int         mp_radioTagging;
 	int         mp_healthBars;
 
+	ICVar*		mp_ssmCVar;
+
 	SCVars();
 	~SCVars();
 

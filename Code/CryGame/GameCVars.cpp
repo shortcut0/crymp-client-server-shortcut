@@ -635,6 +635,7 @@ void SCVars::InitCVars(IConsole* pConsole)
 	pConsole->Register("mp_netAimLerpFactor", &mp_netAimLerpFactor, 20.f, VF_NOT_NET_SYNCED/*VF_CHEAT*/, "set aim smoothing for other clients (1-50, 0:off)");
 	pConsole->Register("mp_netAimLerpFactorCrymp", &mp_netAimLerpFactorCrymp, 42.f, VF_NOT_NET_SYNCED/*VF_CHEAT*/, "set aim smoothing for other clients when mp_crymp 1 (1-50, 0:off)");
 	pConsole->Register("mp_explosiveSilhouettes", &mp_explosiveSilhouettes, 0, VF_NOT_NET_SYNCED/*VF_CHEAT*/, "enables new indicators for explosives");
+	mp_ssmCVar = pConsole->RegisterString("mp_ssm", "", VF_NOT_NET_SYNCED, "Sets active SSM");
 }
 
 //------------------------------------------------------------------------
@@ -948,6 +949,7 @@ void SCVars::ReleaseCVars()
 	pConsole->UnregisterVariable("mp_messageCenterColor", true);
 	pConsole->UnregisterVariable("mp_radioTagging", true);
 	pConsole->UnregisterVariable("mp_healthBars", true);
+	pConsole->UnregisterVariable("mp_ssm", true);
 }
 
 //------------------------------------------------------------------------

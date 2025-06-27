@@ -7,12 +7,26 @@
 #include "CryGame/Game.h"
 
 #include <string>
+#include <filesystem>
 
 void CSafeWriting::Update(float dt) {
     if (g_pGame && g_pGame->GetGameRules()) {
         if (!m_initialized) {
-            if (gEnv->pScriptSystem->ReloadScript("SfW/SafeWritingGameRules.lua")) {
-                m_initialized = true;
+            std::filesystem::path root{ gEnv->pSystem->GetRootFolder() };
+            std::filesystem::path possiblePaths[] = {
+                root / "SafeWriting" / "SafeWritingGameRules.lua",
+                root / ".." / "SafeWriting" / "SafeWritingGameRules.lua",
+                root / ".." / "Mods" / "SafeWriting" / "Game" / "Scripts" / "ModFiles" / "SafeWritingGameRules.lua",
+                root / ".." / "Mods" / "SafeWriting" / "Files" / "SafeWritingGameRules.lua"
+            };
+            for (auto& path : possiblePaths) {
+                if (std::filesystem::exists(path)) {
+                    gEnv->pScriptSystem->SetGlobalValue("SAFEWRITING_ROOTDIR", path.parent_path().make_preferred().string().c_str());
+                    if (gEnv->pScriptSystem->ReloadScript(path.make_preferred().string().c_str())) {
+                        m_initialized = true;
+                    }
+                    break;
+                }
             }
         }
         IScriptSystem* pSS = gEnv->pScriptSystem;
