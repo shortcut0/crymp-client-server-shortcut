@@ -4,14 +4,23 @@
 #include "CryAction/GameRulesSystem.h"
 #include "CryCommon/CryNetwork/INetwork.h"
 
+#include "CryGame/Game.h"
+
 #include <string>
 
-void CSafeWriting::OnGameRulesLoad(IGameRules* pGR) {
-    gEnv->pScriptSystem->ReloadScript("SfW/SafeWritingGameRules.lua");
-}
-
-void CSafeWriting::OnGameRulesUnload(IGameRules* pGR) {
-
+void CSafeWriting::Update(float dt) {
+    if (g_pGame && g_pGame->GetGameRules()) {
+        if (!m_initialized) {
+            if (gEnv->pScriptSystem->ReloadScript("SfW/SafeWritingGameRules.lua")) {
+                m_initialized = true;
+            }
+        }
+        IScriptSystem* pSS = gEnv->pScriptSystem;
+        if (pSS->BeginCall("SafeWriting_OnUpdate")) {
+            pSS->PushFuncParam(dt);
+            pSS->EndCall();
+        }
+    }
 }
 
 void CSafeWriting::OnClientConnect(IGameRules *pGR, int channelId, bool isReset) {

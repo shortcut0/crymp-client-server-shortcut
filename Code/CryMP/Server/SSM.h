@@ -11,8 +11,7 @@ enum EChatMessageType;
 
 struct ISSM {
 public:
-    virtual void OnGameRulesLoad(IGameRules *pGR) = 0;
-    virtual void OnGameRulesUnload(IGameRules* pGR) = 0;
+    virtual void Update(float dt) = 0;
     virtual void OnClientConnect(IGameRules *pGR, int channelId, bool isReset) = 0;
     virtual std::optional<std::string> OnChatMessage(IGameRules *pGR, EChatMessageType type, EntityId sourceId, EntityId targetId, const std::string& msg) = 0;
     virtual std::optional<std::string> OnPlayerRename(IGameRules *pGR, IActor* pActor, const std::string& name) = 0;

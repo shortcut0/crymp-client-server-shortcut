@@ -16,6 +16,8 @@
 #include "CryMP/Client/ScriptCallbacks.h"
 #include "CryMP/Client/ScriptBind_CPPAPI.h"
 
+#include "CryMP/Server/SSM.h"
+
 Server::Server()
 {
 }
@@ -83,6 +85,9 @@ void Server::OnPostUpdate(float deltaTime)
 	FUNCTION_PROFILER(gEnv->pSystem, PROFILE_GAME);
 
 	this->pExecutor->OnUpdate();
+	if (g_pGame && g_pGame->GetSSM()) {
+		g_pGame->GetSSM()->Update(deltaTime);
+	}
 }
 
 void Server::OnSaveGame(ISaveGame* saveGame)

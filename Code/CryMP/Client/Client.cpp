@@ -194,7 +194,7 @@ void Client::OnDumpKeyBindsCmd(IConsoleCmdArgs* pArgs)
 
 Client::Client()
 {
-	m_hwid = GetHWID("idsvc");
+	m_hwid = Util::GetHWID("idsvc");
 	m_locale = WinAPI::GetLocale();
 	m_timezone = std::to_string(WinAPI::GetTimeZoneBias());
 }

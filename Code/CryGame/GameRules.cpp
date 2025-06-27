@@ -272,9 +272,6 @@ void CGameRules::PostInitClient(int channelId)
 void CGameRules::Release()
 {
 	UnregisterConsoleCommands(gEnv->pConsole);
-	if (ISSM* pSSM = g_pGame->GetSSM()) {
-		pSSM->OnGameRulesUnload(this);
-	}
 	delete this;
 }
 
@@ -556,10 +553,6 @@ void CGameRules::OnResetMap()
 
 		for (TPlayerTeamIdMap::iterator tit = m_playerteams.begin(); tit != m_playerteams.end(); tit++)
 			tit->second.resize(0);
-	}
-
-	if (ISSM* pSSM = g_pGame->GetSSM()) {
-		pSSM->OnGameRulesLoad(this);
 	}
 }
 
