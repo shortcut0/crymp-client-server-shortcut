@@ -6,6 +6,14 @@
 
 #include <string>
 
+void CSafeWriting::OnGameRulesLoad(IGameRules* pGR) {
+    gEnv->pScriptSystem->ReloadScript("SfW/SafeWritingGameRules.lua");
+}
+
+void CSafeWriting::OnGameRulesUnload(IGameRules* pGR) {
+
+}
+
 void CSafeWriting::OnClientConnect(IGameRules *pGR, int channelId, bool isReset) {
     if(INetChannel *pNetChannel=gEnv->pGame->GetIGameFramework()->GetNetChannel(channelId)) {
 			int n_ip = *(int*)(((const char*)pNetChannel) + 0x78);

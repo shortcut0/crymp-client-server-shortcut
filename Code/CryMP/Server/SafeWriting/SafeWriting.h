@@ -3,6 +3,8 @@
 
 class CSafeWriting : public ISSM {
 public:
+    void OnGameRulesLoad(IGameRules* pGR) override;
+    void OnGameRulesUnload(IGameRules* pGR) override;
     void OnClientConnect(IGameRules *pGR, int channelId, bool isReset) override;
     std::optional<std::string> OnChatMessage(IGameRules* pGR, EChatMessageType type, EntityId sourceId, EntityId targetId, const std::string& msg) override;
     std::optional<std::string> OnPlayerRename(IGameRules *pGR, IActor* pActor, const std::string& name) override;
