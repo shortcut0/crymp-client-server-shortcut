@@ -553,6 +553,9 @@ add_library(Base OBJECT
 	Code/CryMP/Server/Server.cpp
 	Code/CryMP/Server/Server.h
 	Code/CryMP/Server/SSM.h
+	Code/CryMP/Server/SafeWriting/API.h
+	Code/CryMP/Server/SafeWriting/APIImpl.h
+	Code/CryMP/Server/SafeWriting/APIImpl.cpp
 	Code/CryMP/Server/SafeWriting/SafeWriting.h
 	Code/CryMP/Server/SafeWriting/SafeWriting.cpp
 	Code/CryScriptSystem/LuaLibs/bitlib.c

@@ -4,10 +4,22 @@
 #include "CryAction/GameRulesSystem.h"
 #include "CryCommon/CryNetwork/INetwork.h"
 
+#include "CryMP/Server/SafeWriting/APIImpl.h"
+
 #include "CryGame/Game.h"
 
 #include <string>
 #include <filesystem>
+
+CSafeWriting::CSafeWriting() {
+    m_pAPI = new CSafeWritingAPI();
+    m_pFR = new FunctionRegisterer(gEnv->pSystem, gEnv->pGame->GetIGameFramework(), m_pAPI);
+}
+
+CSafeWriting::~CSafeWriting() {
+    delete m_pFR;
+    delete m_pAPI;
+}
 
 void CSafeWriting::Update(float dt) {
     if (g_pGame && g_pGame->GetGameRules()) {
