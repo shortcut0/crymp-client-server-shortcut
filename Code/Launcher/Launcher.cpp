@@ -1245,8 +1245,22 @@ void Launcher::OnEarlyEngineInit(ISystem* pSystem)
 	});
 }
 
+struct DummySystemCallback : public ISystemUserCallback
+{
+	bool OnError(const char*) override { return false; }
+	void OnSaveDocument() override {}
+	void OnProcessSwitch() override {}
+	void OnInitProgress(const char*) override {}
+	void OnInit(ISystem*) override {}
+	void OnShutdown() override {}
+	void OnUpdate() override {}
+	void GetMemoryUsage(ICrySizer*) override {}
+};
+
 void Launcher::Run()
 {
+	DummySystemCallback dummyCallback;
+
 	m_params.hInstance = WinAPI::DLL::Get(nullptr);  // EXE handle
 	m_params.pLog = &Logger::GetInstance();
 #ifdef SERVER_LAUNCHER
@@ -1254,6 +1268,12 @@ void Launcher::Run()
 #else
 	m_params.isDedicatedServer = WinAPI::CmdLine::HasArg("-dedicated");
 #endif
+
+	if (WinAPI::CmdLine::HasArg("-headless"))
+	{
+		m_params.pUserCallback = &dummyCallback;
+		m_params.isDedicatedServer = true;
+	}
 
 	this->SetCmdLine();
 
