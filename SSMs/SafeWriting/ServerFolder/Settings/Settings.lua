@@ -176,7 +176,7 @@ SafeWriting.Settings={
 	SpammyInterval=10; -- in seconds, 1 message per ? seconds
 	SpammyMessages={	--here you put messages,which will spam to players in every ? seconds
 		"This server is using SSM SafeWriting "..(SafeWriting.Version or " < 1.8.5"),
-		"You can download free sources at http://crymp.org/",
+		"You can download free sources at https://crymp.org/",
 	};
 	
 	MapVotingTimeout=300; --in seconds
