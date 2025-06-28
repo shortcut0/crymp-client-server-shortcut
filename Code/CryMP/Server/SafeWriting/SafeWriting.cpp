@@ -133,3 +133,7 @@ bool CSafeWriting::IsHitRMILegitimate(INetChannel* pNC, EntityId sourceId, Entit
         return true;
     }
 }
+
+bool CSafeWriting::CanReceiveChatMessage(EChatMessageType type, EntityId sourceId, EntityId targetId) {
+    return true;
+}

@@ -12,9 +12,7 @@
 
 #include "Server.h"
 
-#include "CryMP/Client/ScriptCommands.h"
-#include "CryMP/Client/ScriptCallbacks.h"
-#include "CryMP/Client/ScriptBind_CPPAPI.h"
+#include "CryMP/Common/ScriptBind_CPPAPI.h"
 
 #include "CryMP/Server/SSM.h"
 
@@ -60,8 +58,6 @@ void Server::Init(IGameFramework* pGameFramework)
 	// mods are not supported
 	this->pGame->Init(pGameFramework);
 
-	m_pScriptCommands = std::make_unique<ScriptCommands>();
-	m_pScriptCallbacks = std::make_unique<ScriptCallbacks>();
 	m_pScriptBind_CPPAPI = std::make_unique<ScriptBind_CPPAPI>();
 }
 

@@ -524,8 +524,6 @@ add_library(Base OBJECT
 	Code/CryMP/Client/MapExtractor.h
 	Code/CryMP/Client/ParticleManager.cpp
 	Code/CryMP/Client/ParticleManager.h
-	Code/CryMP/Client/ScriptBind_CPPAPI.cpp
-	Code/CryMP/Client/ScriptBind_CPPAPI.h
 	Code/CryMP/Client/ScriptCallbacks.cpp
 	Code/CryMP/Client/ScriptCallbacks.h
 	Code/CryMP/Client/ScriptCommands.cpp
@@ -550,6 +548,8 @@ add_library(Base OBJECT
 	Code/CryMP/Common/HTTP.h
 	Code/CryMP/Common/HTTPClient.cpp
 	Code/CryMP/Common/HTTPClient.h
+	Code/CryMP/Common/ScriptBind_CPPAPI.cpp
+	Code/CryMP/Common/ScriptBind_CPPAPI.h
 	Code/CryMP/Server/Server.cpp
 	Code/CryMP/Server/Server.h
 	Code/CryMP/Server/SSM.h

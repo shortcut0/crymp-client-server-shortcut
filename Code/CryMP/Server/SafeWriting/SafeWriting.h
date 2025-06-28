@@ -17,4 +17,5 @@ public:
     std::optional<std::string> OnPlayerRename(IGameRules *pGR, IActor* pActor, const std::string& name) override;
     bool IsRMILegitimate(INetChannel* pNC, EntityId sourceId) override;
     bool IsHitRMILegitimate(INetChannel* pNC, EntityId sourceId, EntityId weaponId) override;
+    bool CanReceiveChatMessage(EChatMessageType type, EntityId sourceId, EntityId targetId) override;
 };

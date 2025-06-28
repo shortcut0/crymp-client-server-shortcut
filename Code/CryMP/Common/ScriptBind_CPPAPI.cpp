@@ -13,10 +13,10 @@
 
 #include "ScriptBind_CPPAPI.h"
 #include "CryMP/Client/Client.h"
-#include "CryMP/Server/Server.h"
 #include "CryMP/Client/ScriptCommands.h"
 #include "CryMP/Client/ScriptCallbacks.h"
 #include "CryMP/Client/DrawTools.h"
+#include "CryMP/Server/Server.h"
 #include "CryGame/GameActions.h"
 #include "CryGame/Actors/Actor.h"
 
@@ -178,9 +178,9 @@ int ScriptBind_CPPAPI::FSetCVar(IFunctionHandler *pH, const char *cvar, const ch
 	}
 
 	const std::string previousVal = pCVar->GetString();
-
-	if (previousVal != std::string_view(value))
-	{
+	if (gEnv->bServer) {
+		pCVar->ForceSet(value);
+	} else if (previousVal != std::string_view(value)) {
 		pCVar->ForceSet(value);
 
 		// CVar still the same, is it synced?
@@ -200,7 +200,7 @@ int ScriptBind_CPPAPI::FSetCVar(IFunctionHandler *pH, const char *cvar, const ch
 
 			if (std::string_view(value) != std::string_view(pCVar->GetString()))
 			{
-				CryLogAlways("$4[CryMP] Failed to change CVar %s - value still %s", cvar, pCVar->GetString());
+				CryLogWarning("$4[CryMP] Failed to change CVar %s - value still %s", cvar, pCVar->GetString());
 				return pH->EndFunction(false);
 			}
 		}

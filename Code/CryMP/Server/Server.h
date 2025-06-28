@@ -7,8 +7,6 @@
 class Executor;
 class HTTPClient;
 
-class ScriptCommands;
-class ScriptCallbacks;
 class ScriptBind_CPPAPI;
 
 class Server : public IGameFrameworkListener
@@ -20,8 +18,6 @@ public:
 	std::unique_ptr<Executor> pExecutor;
 	std::unique_ptr<HTTPClient> pHttpClient;
 
-	std::unique_ptr<ScriptCommands> m_pScriptCommands;
-	std::unique_ptr<ScriptCallbacks> m_pScriptCallbacks;
 	std::unique_ptr<ScriptBind_CPPAPI> m_pScriptBind_CPPAPI;
 
 	Server();
