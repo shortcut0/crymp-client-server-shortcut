@@ -54,6 +54,10 @@ void Server::Init(IGameFramework* pGameFramework)
 		this->pGame = new CGame();
 	}
 
+	if (WinAPI::CmdLine::HasArg("-ssm")) {
+		m_ssm = WinAPI::CmdLine::GetArgValue("-ssm");
+	}
+
 	// initialize the game
 	// mods are not supported
 	this->pGame->Init(pGameFramework);
@@ -128,4 +132,8 @@ void Server::OnActionEvent(const SActionEvent& event)
 void Server::HttpRequest(HTTPClientRequest&& request)
 {
 	pHttpClient->Request(std::move(request));
+}
+
+std::optional<std::string> Server::GetSSM() const {
+	return m_ssm;
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <string>
 
 #include "CryCommon/CryAction/IGameFramework.h"
 
@@ -14,6 +16,7 @@ class Server : public IGameFrameworkListener
 public:
 	IGame *pGame = nullptr;
 	IGameFramework* pGameFramework = nullptr;
+	std::optional<std::string> m_ssm;
 
 	std::unique_ptr<Executor> pExecutor;
 	std::unique_ptr<HTTPClient> pHttpClient;
@@ -27,6 +30,8 @@ public:
 	void UpdateLoop();
 	
 	void HttpRequest(HTTPClientRequest&& request);
+
+	std::optional<std::string> GetSSM() const;
 
 private:
 	// IGameFrameworkListener

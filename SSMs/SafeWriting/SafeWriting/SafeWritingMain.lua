@@ -597,7 +597,7 @@ function PrepareAll()
     if IsDllLoaded100() then
         System.ExecuteCommand("dohooks")
     end
-    if IsDllLoaded() then
+    if IsDllLoaded() and g_gameRules and g_gameRules.CanAllSeeChat then
         if se.CanAllSeeChat then
             System.ExecuteCommand("sfw_seechatofall 1")
         else
@@ -846,7 +846,7 @@ function SafeWriting:OnTimerTick()
                     pak
                 )
                 AsyncConnectHTTP(
-                    "crymp.net",
+                    se.MasterHost or "crymp.org",
                     page,
                     se.ForceGET and "GET" or "POST",
                     80,

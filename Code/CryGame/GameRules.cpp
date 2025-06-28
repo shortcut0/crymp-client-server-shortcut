@@ -50,6 +50,7 @@
 #include "CryMP/Client/Advertising.h"
 #include "CryMP/Client/HealthManager.h"
 
+#include "CryMP/Server/Server.h"
 #include "CryMP/Server/SSM.h"
 #include "CryMP/Server/SafeWriting/SafeWriting.h"
 
@@ -226,9 +227,9 @@ void CGameRules::PostInit(IGameObject* pGameObject)
 		gClient->GetScriptCallbacks()->OnGameRulesCreated(GetEntityId());
 	}
 
-	if (gEnv->bServer) {
-		string activeSSM { g_pGameCVars->mp_ssmCVar->GetString() };
-		if (activeSSM == "SafeWriting") {
+	if (gServer && gEnv->bServer && g_pGame->GetSSM() == NULL && gServer->GetSSM()) {
+		std::string ssm = *gServer->GetSSM();
+		if (ssm == "SafeWriting") {
 			g_pGame->SetSSM(new CSafeWriting());
 		}
 	}
