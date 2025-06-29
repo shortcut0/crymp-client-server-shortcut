@@ -4,6 +4,8 @@
 
 #include "FileOutsidePak.h"
 
+#include <windows.h>
+
 #if defined(_MSC_VER) || defined(__MINGW64__)
 #define FSEEK64 _fseeki64
 #define FTELL64 _ftelli64
@@ -109,11 +111,22 @@ void* FileOutsidePak::GetCachedFileData(std::size_t& fileSize)
 
 std::uint64_t FileOutsidePak::GetModificationTime()
 {
-	std::error_code ec;
-	auto lastWriteTime = std::filesystem::last_write_time(m_path, ec);
-	auto systemLastWriteTime = std::chrono::clock_cast<std::chrono::system_clock>(lastWriteTime);
+    WIN32_FILE_ATTRIBUTE_DATA fileInfo;
 
-	return std::chrono::system_clock::to_time_t(systemLastWriteTime);
+    if (GetFileAttributesExW(m_path.c_str(), GetFileExInfoStandard, &fileInfo))
+    {
+        ULARGE_INTEGER ull;
+        ull.LowPart = fileInfo.ftLastWriteTime.dwLowDateTime;
+        ull.HighPart = fileInfo.ftLastWriteTime.dwHighDateTime;
+
+        ull.QuadPart -= 116444736000000000ULL;
+
+        return ull.QuadPart / 10000000ULL;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 std::FILE* FileOutsidePak::GetHandle()
