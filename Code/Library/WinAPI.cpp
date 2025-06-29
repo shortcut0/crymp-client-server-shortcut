@@ -129,6 +129,22 @@ void WinAPI::SetWorkingDirectory(const std::filesystem::path& path)
 	}
 }
 
+uint64_t WinAPI::GetLastWriteTime(const std::filesystem::path& path)
+{
+	WIN32_FILE_ATTRIBUTE_DATA attributes;
+	if (!GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &attributes))
+	{
+		return 0;
+	}
+
+	// https://learn.microsoft.com/en-us/windows/win32/sysinfo/converting-a-time-t-value-to-a-file-time
+	ULARGE_INTEGER time_value;
+	time_value.LowPart = attributes.ftLastWriteTime.dwLowDateTime;
+	time_value.HighPart = attributes.ftLastWriteTime.dwHighDateTime;
+	time_value.QuadPart -= 116444736000000000ULL;
+	return time_value.QuadPart / 10000000ULL;
+}
+
 /////////////
 // Modules //
 /////////////
