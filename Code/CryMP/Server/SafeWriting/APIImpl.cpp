@@ -165,7 +165,7 @@ SafeWritingAPIFunc CSafeWritingAPI::FindFunc(const char* name) {
 	}
 }
 
-FunctionRegisterer::FunctionRegisterer(ISystem* pSystem, IGameFramework* pGameFramework, SafeWritingAPI *pAPI)
+FunctionRegisterer::FunctionRegisterer(ISystem* pSystem, IGameFramework* pGameFramework, SafeWritingAPI* pAPI)
 	:	m_pSystem(pSystem),
 		m_pSS(pSystem->GetIScriptSystem()),
 		m_pGameFW(pGameFramework),
@@ -197,15 +197,16 @@ int FunctionRegisterer::LoadDLL(IFunctionHandler* pH, const char* name) {
 	HMODULE lib = LoadLibraryA(name);
 	typedef void(*PFINIT)(void*);
 	if (lib == NULL) {
-		printf("$6[CSafeWritingAPI] Failed to load DLL! Error %d (%s)", GetLastError(), name);
+		CryLogAlways("$6[CSafeWritingAPI] Failed to load DLL! Error %d (%s)", GetLastError(), name);
 		return pH->EndFunction(false);
 	}
 	PFINIT f = (PFINIT)GetProcAddress(lib, "Init");
 	if (!f) {
-		printf("$6[CSafeWritingAPI] Address of Init inside DLL is unknown! Error %d", GetLastError());
+		CryLogAlways("$6[CSafeWritingAPI] Address of Init inside DLL is unknown! Error %d", GetLastError());
 		return pH->EndFunction(false);
+	} else {
+		f(m_pAPI);
 	}
-	else f(m_pAPI);
 	return pH->EndFunction(true);
 }
 

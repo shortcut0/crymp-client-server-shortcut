@@ -15,6 +15,7 @@
 #include "CryMP/Common/ScriptBind_CPPAPI.h"
 
 #include "CryMP/Server/SSM.h"
+#include "CryMP/Server/SafeWriting/SafeWriting.h"
 
 Server::Server()
 {
@@ -51,11 +52,14 @@ void Server::Init(IGameFramework* pGameFramework)
 	}
 	else
 	{
-		this->pGame = new CGame();
-	}
-
-	if (WinAPI::CmdLine::HasArg("-ssm")) {
-		m_ssm = WinAPI::CmdLine::GetArgValue("-ssm");
+		CGame* pGame = new CGame();
+		this->pGame = pGame;
+		if (WinAPI::CmdLine::HasArg("-ssm")) {
+			std::string ssm{ WinAPI::CmdLine::GetArgValue("-ssm") };
+			if (ssm == "SafeWriting") {
+				pGame->SetSSM(new CSafeWriting(pGameFramework, pGameFramework->GetISystem()));
+			}
+		}
 	}
 
 	// initialize the game
@@ -132,8 +136,4 @@ void Server::OnActionEvent(const SActionEvent& event)
 void Server::HttpRequest(HTTPClientRequest&& request)
 {
 	pHttpClient->Request(std::move(request));
-}
-
-std::optional<std::string> Server::GetSSM() const {
-	return m_ssm;
 }

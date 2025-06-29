@@ -5,20 +5,26 @@
 #include "CryCommon/CryNetwork/INetwork.h"
 
 #include "CryMP/Server/SafeWriting/APIImpl.h"
-
 #include "CryGame/Game.h"
 
 #include <string>
 #include <filesystem>
 
-CSafeWriting::CSafeWriting() {
-    m_pAPI = new CSafeWritingAPI();
-    m_pFR = new FunctionRegisterer(gEnv->pSystem, gEnv->pGame->GetIGameFramework(), m_pAPI);
+CSafeWriting::CSafeWriting(IGameFramework *pFW, ISystem* pSystem) {
+    m_pAPI = std::make_unique<CSafeWritingAPI>();
+    m_pFR = std::make_unique<FunctionRegisterer>(pSystem, pFW, m_pAPI.get());
 }
 
 CSafeWriting::~CSafeWriting() {
-    delete m_pFR;
-    delete m_pAPI;
+
+}
+
+void CSafeWriting::OnGameRulesLoad(IGameRules* pGR) {
+
+}
+
+void CSafeWriting::OnGameRulesUnload(IGameRules* pGR) {
+
 }
 
 void CSafeWriting::Update(float dt) {
@@ -27,9 +33,9 @@ void CSafeWriting::Update(float dt) {
             std::filesystem::path root{ gEnv->pSystem->GetRootFolder() };
             std::filesystem::path possiblePaths[] = {
                 root / "SafeWriting" / "SafeWritingGameRules.lua",
-                root / ".." / "SafeWriting" / "SafeWritingGameRules.lua",
-                root / ".." / "Mods" / "SafeWriting" / "Game" / "Scripts" / "ModFiles" / "SafeWritingGameRules.lua",
-                root / ".." / "Mods" / "SafeWriting" / "Files" / "SafeWritingGameRules.lua"
+                root.parent_path() / "SafeWriting" / "SafeWritingGameRules.lua",
+                root.parent_path() / "Mods" / "SafeWriting" / "Game" / "Scripts" / "ModFiles" / "SafeWritingGameRules.lua",
+                root.parent_path() / "Mods" / "SafeWriting" / "Files" / "SafeWritingGameRules.lua"
             };
             for (auto& path : possiblePaths) {
                 if (std::filesystem::exists(path)) {
@@ -51,7 +57,11 @@ void CSafeWriting::Update(float dt) {
 
 void CSafeWriting::OnClientConnect(IGameRules *pGR, int channelId, bool isReset) {
     if(INetChannel *pNetChannel=gEnv->pGame->GetIGameFramework()->GetNetChannel(channelId)) {
-			int n_ip = *(int*)(((const char*)pNetChannel) + 0x78);
+#ifdef BUILD_64BIT
+            int n_ip = *(int*)(((const unsigned char*)pNetChannel) + 0xd0);
+#else
+            int n_ip = *(int*)(((const unsigned char*)pNetChannel) + 0x78);
+#endif
 			std::string profileId = std::to_string(pNetChannel->GetProfileId());
 
 			char ip[256];

@@ -1,9 +1,10 @@
 #pragma once
+#include "CryCommon/CryScriptSystem/IScriptSystem.h"
+
 #include "CryMP/Server/SafeWriting/API.h"
 #include <map>
 #include <string>
 
-#include "CryCommon/CryScriptSystem/IScriptSystem.h"
 
 struct IFunctionHandler;
 struct ISystem;
@@ -11,7 +12,7 @@ struct IScriptSystem;
 
 class FunctionRegisterer : public CScriptableBase {
 public:
-    FunctionRegisterer(ISystem*, IGameFramework*, SafeWritingAPI *pAPI);
+    FunctionRegisterer(ISystem*, IGameFramework*, SafeWritingAPI*);
     int RunFunc(IFunctionHandler* pH, const char* name);
     int LoadDLL(IFunctionHandler* pH, const char* path);
     int Is64Bit(IFunctionHandler* pH);
@@ -23,7 +24,7 @@ protected:
     SafeWritingAPI* m_pAPI;
 };
 
-class  CSafeWritingAPI : public SafeWritingAPI {
+class CSafeWritingAPI : public SafeWritingAPI {
 public:
     CSafeWritingAPI();
     ~CSafeWritingAPI() override;

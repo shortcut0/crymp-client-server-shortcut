@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-global
 --Created on 12th of august 2013 as part of SSM SafeWriting project
 --CPPAPI.LoadSSMScript("Files/SafeWritingMain.lua");
 

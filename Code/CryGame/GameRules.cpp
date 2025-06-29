@@ -227,11 +227,8 @@ void CGameRules::PostInit(IGameObject* pGameObject)
 		gClient->GetScriptCallbacks()->OnGameRulesCreated(GetEntityId());
 	}
 
-	if (gServer && gEnv->bServer && g_pGame->GetSSM() == NULL && gServer->GetSSM()) {
-		std::string ssm = *gServer->GetSSM();
-		if (ssm == "SafeWriting") {
-			g_pGame->SetSSM(new CSafeWriting());
-		}
+	if (ISSM* pSSM = g_pGame->GetSSM()) {
+		pSSM->OnGameRulesLoad(this);
 	}
 }
 
@@ -282,6 +279,9 @@ void CGameRules::PostInitClient(int channelId)
 void CGameRules::Release()
 {
 	UnregisterConsoleCommands(gEnv->pConsole);
+	if (ISSM* pSSM = g_pGame->GetSSM()) {
+		pSSM->OnGameRulesUnload(this);
+	}
 	delete this;
 }
 
@@ -3154,6 +3154,7 @@ void CGameRules::SendTextMessage(ETextMessageType type, const char* msg, unsigne
 //------------------------------------------------------------------------
 bool CGameRules::CanReceiveChatMessage(EChatMessageType type, EntityId sourceId, EntityId targetId) const
 {
+	/*
 	if (sourceId == targetId)
 		return true;
 
@@ -3173,7 +3174,7 @@ bool CGameRules::CanReceiveChatMessage(EChatMessageType type, EntityId sourceId,
 	{
 		//CryLog("Disallowing msg (spec): source %d, target %d, sspec %d, sdead %d, tspec %d, tdead %d", sourceId, targetId, sspec, sdead, tspec, tdead);
 		return false;
-	}
+	}*/
 
 	//CryLog("Allowing msg: source %d, target %d, sspec %d, sdead %d, tspec %d, tdead %d", sourceId, targetId, sspec, sdead, tspec, tdead);
 	return true;

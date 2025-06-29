@@ -2,7 +2,7 @@ function AttemptValidate(player,prof,uid,name,attempt)
 	local url=urlfmt("/api/validate.php?prof=%s&uid=%s",prof,uid);
 	local se=SafeWriting.Settings;
 	attempt=attempt or 0;
-	AsyncConnectHTTP(se.MasterHost or "crymp.net",url,"GET",80,true,15,function(c)
+	AsyncConnectHTTP(se.MasterHost or "crymp.org", url, "GET", 443, true, 15, function(c)
 		local content,hdr,error=ParseHTTP(c);
 		if not error then
 			local err=string.find(c,"%Validation:Failed%",nil,true);
@@ -92,15 +92,3 @@ AddChatCommand("validate",function(self,player,msg,prof,uid,name)
 		end
 	end);
 end,{WORD,WORD,WORD});
-AddChatCommand("sync", function(self, player, msg, syncId)
-	local kick = false;
-	if SafeWriting.Settings and (SafeWriting.Settings.IntegrityChecks or SafeWriting.Settings.AllowMessaging) then
-		kick = true;
-	end
-	if CPPAPI.CheckRPCID(syncId, player.actor:GetChannel()) then
-		player.rpcId = syncId;
-		SendMessageToClient(player, "uuid", syncId, function(sender, msgType, val)
-			--...
-		end);
-	elseif kick then KickPlayer(player, "invalid RPC ID"); end
-end, {TEXT});
