@@ -56,6 +56,8 @@ namespace WinAPI
 
 	void SetWorkingDirectory(const std::filesystem::path& path);
 
+	uint64_t GetLastWriteTime(const std::filesystem::path& path);
+
 	/////////////
 	// Modules //
 	/////////////
