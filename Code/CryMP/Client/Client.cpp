@@ -10,6 +10,7 @@
 #include "CryGame/Game.h"
 #include "CryMP/Common/Executor.h"
 #include "CryMP/Common/GSMasterHook.h"
+#include "CryMP/Common/ScriptBind_CPPAPI.h"
 #include "CrySystem/GameWindow.h"
 #include "CrySystem/Logger.h"
 #include "CrySystem/RandomGenerator.h"
@@ -24,7 +25,6 @@
 #include "MapDownloader.h"
 #include "ScriptCommands.h"
 #include "ScriptCallbacks.h"
-#include "ScriptBind_CPPAPI.h"
 #include "ServerBrowser.h"
 #include "ServerConnector.h"
 #include "ServerPAK.h"
@@ -194,7 +194,7 @@ void Client::OnDumpKeyBindsCmd(IConsoleCmdArgs* pArgs)
 
 Client::Client()
 {
-	m_hwid = GetHWID("idsvc");
+	m_hwid = Util::GetHWID("idsvc");
 	m_locale = WinAPI::GetLocale();
 	m_timezone = std::to_string(WinAPI::GetTimeZoneBias());
 }
@@ -373,16 +373,6 @@ std::string Client::GetMasterServerAPI(const std::string & master)
 		else
 			return "https://" + master + "/api";
 	}
-}
-
-std::string Client::GetHWID(const std::string_view & salt)
-{
-	std::string hwid = Util::SHA256(WinAPI::GetMachineGUID());
-
-	if (!hwid.empty())
-		hwid += ':' + Util::SHA256(hwid + std::string(salt));
-
-	return hwid;
 }
 
 void Client::AddKeyBind(const std::string_view& key, const std::string_view& command)

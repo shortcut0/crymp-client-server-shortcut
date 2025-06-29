@@ -250,12 +250,18 @@ namespace WinAPI
 
 	std::string GetMachineGUID();
 	std::string GetLocale();
+	std::string GetLocalIP();
 
 	bool IsVistaOrLater();
 
 	unsigned int GetLogicalProcessorCount();
 
 	std::size_t GetSystemLanguageCode(char* buffer, std::size_t bufferSize);
+
+	/////////////
+	// Network //
+	////////////
+	std::string GetIP(const std::string& hostName);
 
 	//////////
 	// HTTP //
