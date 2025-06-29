@@ -34,6 +34,8 @@ void Server::Init(IGameFramework* pGameFramework)
 
 	pGameFramework->RegisterListener(this, "crymp-server", FRAMEWORKLISTENERPRIORITY_DEFAULT);
 
+	CGame* cGame = NULL;
+
 	if (WinAPI::CmdLine::HasArg("-oldgame"))
 	{
 		void* pCryGame = WinAPI::DLL::Load("CryGame.dll");
@@ -52,19 +54,23 @@ void Server::Init(IGameFramework* pGameFramework)
 	}
 	else
 	{
-		CGame* pGame = new CGame();
-		this->pGame = pGame;
-		if (WinAPI::CmdLine::HasArg("-ssm")) {
-			std::string ssm{ WinAPI::CmdLine::GetArgValue("-ssm") };
-			if (ssm == "SafeWriting") {
-				pGame->SetSSM(new CSafeWriting(pGameFramework, pGameFramework->GetISystem()));
-			}
-		}
+		cGame = new CGame();
+		this->pGame = cGame;
 	}
 
 	// initialize the game
 	// mods are not supported
 	this->pGame->Init(pGameFramework);
+
+	if (cGame) {
+		if (WinAPI::CmdLine::HasArg("-ssm")) {
+			std::string ssm{ WinAPI::CmdLine::GetArgValue("-ssm") };
+			CryLogAlways("$6[CryMP] Detected SSM: %s", ssm.c_str());
+			if (ssm == "SafeWriting") {
+				cGame->SetSSM(new CSafeWriting(pGameFramework, pGameFramework->GetISystem()));
+			}
+		}
+	}
 
 	m_pScriptBind_CPPAPI = std::make_unique<ScriptBind_CPPAPI>();
 }

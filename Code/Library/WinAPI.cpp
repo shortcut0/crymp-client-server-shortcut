@@ -1110,7 +1110,7 @@ std::string WinAPI::GetLocalIP() {
 			}
 		}
 	}
-	return "192.168.1.1";
+	return "";
 }
 
 std::string WinAPI::GetIP(const std::string& hostName) {

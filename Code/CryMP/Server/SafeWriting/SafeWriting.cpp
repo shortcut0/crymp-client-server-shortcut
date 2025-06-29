@@ -11,6 +11,7 @@
 #include <filesystem>
 
 CSafeWriting::CSafeWriting(IGameFramework *pFW, ISystem* pSystem) {
+    CryLog("$6[SafeWriting] Created CSafeWriting");
     m_pAPI = std::make_unique<CSafeWritingAPI>();
     m_pFR = std::make_unique<FunctionRegisterer>(pSystem, pFW, m_pAPI.get());
 }
@@ -20,7 +21,34 @@ CSafeWriting::~CSafeWriting() {
 }
 
 void CSafeWriting::OnGameRulesLoad(IGameRules* pGR) {
+    if (!m_initialized) {
+        std::filesystem::path root{ gEnv->pSystem->GetRootFolder() };
+        root = root.make_preferred();
 
+        std::filesystem::path possiblePaths[] = {
+            root / "SafeWriting" / "SafeWritingGameRules.lua",
+            root / ".." / "SafeWriting" / "SafeWritingGameRules.lua",
+            root / ".." / "Mods" / "SafeWriting" / "Game" / "Scripts" / "ModFiles" / "SafeWritingGameRules.lua",
+            root / ".." / "Mods" / "SafeWriting" / "Files" / "SafeWritingGameRules.lua"
+        };
+
+        for (auto& path : possiblePaths) {
+            if (std::filesystem::exists(path)) {
+                CryLogAlways("$6[SafeWriting] Loading SafeWriting from %s", path.parent_path().string().c_str());
+                gEnv->pScriptSystem->SetGlobalValue("SAFEWRITING_ROOTDIR", path.parent_path().string().c_str());
+                if (gEnv->pScriptSystem->ReloadScript(path.make_preferred().string().c_str())) {
+                    m_initialized = true;
+                }
+                break;
+            }
+        }
+        if (!m_initialized) {
+            CryLogAlways("$6[SafeWriting] Failed to locate SafeWriting files, tried looking in following paths: ");
+            for (auto& path : possiblePaths) {
+                CryLogAlways("$6 %s", path.string().c_str());
+            }
+        }
+    }
 }
 
 void CSafeWriting::OnGameRulesUnload(IGameRules* pGR) {
@@ -28,25 +56,7 @@ void CSafeWriting::OnGameRulesUnload(IGameRules* pGR) {
 }
 
 void CSafeWriting::Update(float dt) {
-    if (g_pGame && g_pGame->GetGameRules()) {
-        if (!m_initialized) {
-            std::filesystem::path root{ gEnv->pSystem->GetRootFolder() };
-            std::filesystem::path possiblePaths[] = {
-                root / "SafeWriting" / "SafeWritingGameRules.lua",
-                root.parent_path() / "SafeWriting" / "SafeWritingGameRules.lua",
-                root.parent_path() / "Mods" / "SafeWriting" / "Game" / "Scripts" / "ModFiles" / "SafeWritingGameRules.lua",
-                root.parent_path() / "Mods" / "SafeWriting" / "Files" / "SafeWritingGameRules.lua"
-            };
-            for (auto& path : possiblePaths) {
-                if (std::filesystem::exists(path)) {
-                    gEnv->pScriptSystem->SetGlobalValue("SAFEWRITING_ROOTDIR", path.parent_path().make_preferred().string().c_str());
-                    if (gEnv->pScriptSystem->ReloadScript(path.make_preferred().string().c_str())) {
-                        m_initialized = true;
-                    }
-                    break;
-                }
-            }
-        }
+    if (m_initialized) {
         IScriptSystem* pSS = gEnv->pScriptSystem;
         if (pSS->BeginCall("SafeWriting_OnUpdate")) {
             pSS->PushFuncParam(dt);
