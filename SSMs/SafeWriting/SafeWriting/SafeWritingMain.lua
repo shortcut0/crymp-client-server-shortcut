@@ -783,7 +783,7 @@ function SafeWriting:OnTimerTick()
                     pak
                 )
                 AsyncConnectHTTP(
-                    "crymp.net",
+                    se.MasterHost or "crymp.org",
                     page,
                     se.ForceGET and "GET" or "POST",
                     443,
@@ -2042,6 +2042,17 @@ end
 function CheckPlayer(player, noevent)
     novent = noevent or false
     local se = SafeWriting.Settings
+    local channelId = player.actor:GetChannel()
+    if _G["ChannelInfo"] and _G["ChannelInfo"][channelId] then
+        local newProfile = _G["ChannelInfo"][player.channelId].profile
+        if newProfile ~= "0" and (player.profile == nil or player.profile == "0") then
+            player.profile = newProfile
+            printf("Re-using cached profile %s for player %s (channel %d)", player.profile, player:GetName(), channelId)
+        elseif player.profile ~= nil and player.profile ~= "0" then
+            _G["ChannelInfo"][player.channelId].profile = player.profile
+            printf("Caching profile ID %s for player %s (channel %d)", player.profile, player:GetName(), channelId)
+        end
+    end
     if se.AllowMasterServer and (tostring(player.profile) == "0" or (not player.isSfwCl)) then
         player.waitingForAuth = _time
         printf(
