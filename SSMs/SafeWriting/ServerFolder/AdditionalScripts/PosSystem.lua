@@ -134,7 +134,7 @@ AddChatCommand("poslist",function(self,player,msg,page)
 		Console:SendToTarget(player,"  ${t:PosListSide2|0}[[  ${t:PosList1|9}%3d$o|${t:PosList2|8}%20s$o|${t:PosList1|9}%8s$o|${t:PosList2|8}%8s$o|${t:PosList1|9}%8s|${t:PosList2|8}%4s ${t:PosListSide2|0} ]]  ",i,name,tostring(math.floor(pos.x*100)/100),tostring(math.floor(pos.y*100)/100),tostring(math.floor(pos.z*100)/100),pvp and "on" or "off");
 	end
 	Console:SendToTarget(player,"${t:PosListSide1|6}--[[                       ${t:PosListInfo1|8}Page ${t:PosListInfo2|5}%d ${t:PosListInfo3|8}of${t:PosListInfo4|5} %d${t:PosListSide1|6}                     ]]--",page,math.ceil(#Pos.Maps[Pos.Map]/10));
-	Msg:SendToTarget(player,__qt(player.lang,"Otvor konzolu"));
+	Msg:SendToTarget(player,__qt(player.lang,R.OPEN_CONSOLE));
 end,{INT},{},"Shows you all positions on this map, usage !poslist <page>");
 AddChatCommand("cpos",function(self,player,msg,text)
 	if not text then Chat:SendToTarget(nil,player,"Enter valid position name"); return; end

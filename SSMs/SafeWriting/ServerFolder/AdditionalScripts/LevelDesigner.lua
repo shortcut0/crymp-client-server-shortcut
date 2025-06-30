@@ -921,7 +921,7 @@ if SafeWriting and AddChatCommand and Chat and Console and Msg then
 				Console:SendToTarget(sender,msg,i,v.ISCOLLECTION and "$9collection of entities" or v[1]);
 			end
 		end
-		Msg:SendToTarget(sender,__qt(sender.lang,"Otvor konzolu"));
+		Msg:SendToTarget(sender,__qt(sender.lang,R.OPEN_CONSOLE));
 	end,{},{AdminOnly=true;},"shows list of available objects to spawn");
 	AddChatCommand("ld",function(self,sender,msg,dist,obj)
 		Script.SetTimer(1,function()
@@ -1411,7 +1411,7 @@ if SafeWriting and AddChatCommand and Chat and Console and Msg then
 					Console:SendToTarget(sender,msg,i,v.ISCOLLECTION and "$9collection of entities" or v[1]);
 				end
 			end
-			Msg:SendToTarget(sender,__qt(sender.lang,"Otvor konzolu"));
+			Msg:SendToTarget(sender,__qt(sender.lang,R.OPEN_CONSOLE));
 		end,{},{PremiumOnly=true;},"shows list of available objects to spawn");
 	end
 	LevelDesigner:PrepareModels();

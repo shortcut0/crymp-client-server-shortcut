@@ -295,7 +295,7 @@ AddChatCommand("top10",function(self,player,msg,srt)
 			v.id=v.id..string.rep("*",len/2);
 		end
 		if(pl)then
-			Console:SendToTarget(player,SpecialFormat("${t:Top10On1|3} %2s %12s ${t:Top10On2|6}%10s ${t:Top10On1|3}%10s ${t:Top10On2|6}%24s ${t:Top10On1|3}%11s ${t:Top10On2|6}%19s ${t:Top10On1|3}%s",tostring(ctr),v.id,tkills,tdeaths,tostring(dstkill).."m",pltime,__qt(lang,"teraz"),pl:GetName()));
+			Console:SendToTarget(player,SpecialFormat("${t:Top10On1|3} %2s %12s ${t:Top10On2|6}%10s ${t:Top10On1|3}%10s ${t:Top10On2|6}%24s ${t:Top10On1|3}%11s ${t:Top10On2|6}%19s ${t:Top10On1|3}%s",tostring(ctr),v.id,tkills,tdeaths,tostring(dstkill).."m",pltime,"-",pl:GetName()));
 		else
 			local lo=v.lo or 0;
 			local d=os.date("%d.%m.%Y %H:%M:%S",lo);

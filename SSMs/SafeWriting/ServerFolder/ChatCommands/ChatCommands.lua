@@ -580,7 +580,7 @@ AddChatCommand("settime",function(self,player,msg,newtime)
 		self:EnterValidValue(player);
 		return;
 	end
-	System.ExecuteCommand("change_time "..newtime);
+	ForceSet("e_time_of_day", tostring(newtime))
 	Chat:SendToTarget(nil,player,"[[TIME_WAS_CHANGED_TO]] "..newtime);
 end,{NUMBER},{AdminOnly=true;},"[[settime_info]]");
 AddChatCommand("setgravity",function(self,player,msg,val)
