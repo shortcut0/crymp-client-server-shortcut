@@ -786,7 +786,7 @@ function SafeWriting:OnTimerTick()
                     "crymp.net",
                     page,
                     se.ForceGET and "GET" or "POST",
-                    80,
+                    443,
                     true,
                     15,
                     function(c)
@@ -849,7 +849,7 @@ function SafeWriting:OnTimerTick()
                     se.MasterHost or "crymp.org",
                     page,
                     se.ForceGET and "GET" or "POST",
-                    80,
+                    443,
                     true,
                     15,
                     function(c)
