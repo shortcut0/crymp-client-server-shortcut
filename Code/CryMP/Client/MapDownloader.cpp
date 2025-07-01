@@ -165,7 +165,7 @@ bool MapDownloader::CheckMapVersion(const std::string_view & mapName, const std:
 
 		return file.IsOpen() && file.Read() == mapVersion;
 	}
-	catch (const std::runtime_error& error)
+	catch (const CryMP_Error& error)
 	{
 		CryLogAlways("$4[CryMP] [MapDownloader] Failed to read map version: %s", error.what());
 		return false;
@@ -183,7 +183,7 @@ void MapDownloader::StoreMapVersion(const std::string_view & mapName, const std:
 		file.Resize(0);
 		file.Write(mapVersion);
 	}
-	catch (const std::runtime_error& error)
+	catch (const CryMP_Error& error)
 	{
 		CryLogAlways("$4[CryMP] [MapDownloader] Failed to store map version: %s", error.what());
 	}
