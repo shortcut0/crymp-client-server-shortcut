@@ -74,6 +74,8 @@ public:
 	virtual uint8 GetDefaultProfile( EEntityAspects aspect );
 	// ~IGameObjectProfileManager
 
+	void ReInitFromPool();
+
 	virtual void LoadGeometry();
 	virtual void Physicalize();
 	virtual void SetVelocity(const Vec3 &pos, const Vec3 &dir, const Vec3 &velocity, float speedScale=1.0f);

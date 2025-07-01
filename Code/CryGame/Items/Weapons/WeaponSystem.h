@@ -119,6 +119,11 @@ public:
 	void ApplyEnvironmentChanges();
 	void CheckEnvironmentChanges();
 
+	CProjectile *UseFromPool(IEntityClass *pClass, const SAmmoParams *pAmmoParams);
+	bool ReturnToPool(CProjectile *pProjectile);
+	void RemoveFromPool(CProjectile *pProjectile);
+	void DumpPoolSizes();
+
 	void Serialize(TSerialize ser);
 
 	//CryMP
@@ -132,6 +137,11 @@ public:
 	}
 
 private: 
+	void CreatePool(IEntityClass *pClass);
+	void FreePool(IEntityClass *pClass);
+	uint16 GetPoolSize(IEntityClass *pClass);
+	
+	CProjectile *DoSpawnAmmo(IEntityClass* pAmmoType, bool isRemote, const SAmmoParams *pAmmoParams);
 
 	CGame								*m_pGame;
 	ISystem							*m_pSystem;
@@ -158,6 +168,17 @@ private:
 	bool                m_tokensUpdated;
 
 	EntityId m_lastHostId = 0;
+	int m_bulletsRecycled = 0;
+
+	struct SAmmoPoolDesc
+	{
+		SAmmoPoolDesc() : size(0) {}
+
+		std::deque<CProjectile*> frees;
+		uint16_t size;
+	};
+
+	std::unordered_map<IEntityClass*, SAmmoPoolDesc> m_pools;
 };
 
 
