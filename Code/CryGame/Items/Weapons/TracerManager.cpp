@@ -73,8 +73,6 @@ void CTracer::SetGeometry(const char* name, float scale)
     {
         m_geometrySlot = pEntity->LoadGeometry(TRACER_GEOM_SLOT, name);
 
-        CryLogAlways("CTracer: SetGeometry: %s (id: %d)", name, m_entityId);
-
         if (scale != 1.0f)
         {
             Matrix34 tm = Matrix34::CreateIdentity();
@@ -93,8 +91,6 @@ void CTracer::SetEffect(const char* name, float scale)
             const int slot = pEntity->LoadParticleEmitter(TRACER_FX_SLOT, pEffect, 0, true);
             if (scale != 1.0f)
             {
-                CryLogAlways("CTracer: SetEffect: %s (id: %d)", name, m_entityId);
-
                 Matrix34 tm = Matrix34::CreateIdentity();
                 tm.Scale(Vec3(scale));
                 pEntity->SetSlotLocalTM(slot, tm);
