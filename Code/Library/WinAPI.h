@@ -272,7 +272,7 @@ namespace WinAPI
 	using HTTPRequestReader = std::function<size_t(void*,size_t)>;  // buffer, buffer size, returns data length
 	using HTTPRequestCallback = std::function<void(uint64_t,const HTTPRequestReader&)>;  // content length, reader
 
-	// blocking, returns HTTP status code, throws std::system_error
+	// blocking, returns HTTP status code, throws CryMP_Error
 	int HTTPRequest(
 		const std::string_view & method,
 		const std::string_view & url,
