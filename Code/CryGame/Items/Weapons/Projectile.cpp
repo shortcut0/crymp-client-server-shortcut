@@ -46,7 +46,6 @@ CProjectile::~CProjectile()
 		if (CGameRules* pGameRules = g_pGame->GetGameRules())
 		{
 			pGameRules->RemoveHitListener(this);
-			m_hitListener = false;
 		}
 	}
 
@@ -592,8 +591,8 @@ void CProjectile::Launch(const Vec3& pos, const Vec3& dir, const Vec3& velocity,
 
 	// Only for bullets
 	m_hitPoints = m_pAmmoParams->hitPoints;
-	m_hitListener = false;
-	if (gEnv->bServer) //CryMP: Server only (on client calls empty OnExplosion())
+
+	if (!m_hitListener) //CryMP: Might have been added inside AVMine.cpp / Claymore.cpp already
 	{
 		if (m_hitPoints > 0)
 		{
@@ -703,7 +702,9 @@ void CProjectile::Destroy()
 	GetGameObject()->EnablePhysicsEvent(false, eEPE_OnCollisionLogged);
 
 	if (m_obstructObject)
+	{
 		gEnv->pPhysicalWorld->DestroyPhysicalEntity(m_obstructObject);
+	}
 
 	if (m_hitListener)
 	{
