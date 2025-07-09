@@ -31,27 +31,6 @@ History:
 
 //------------------------------------------------------------------------
 CProjectile::CProjectile()
-	: m_whizSoundId(INVALID_SOUNDID),
-	m_trailSoundId(INVALID_SOUNDID),
-	m_trailEffectId(-1),
-	m_trailUnderWaterId(-1),
-	m_pPhysicalEntity(0),
-	m_pAmmoParams(0),
-	m_destroying(false),
-	m_tracked(false),
-	m_remote(false),
-	m_totalLifetime(0.0f),
-	m_scaledEffectval(0.0f),
-	m_obstructObject(0),
-	m_hitTypeId(0),
-	m_scaledEffectSignaled(false),
-	m_hitListener(false),
-	m_hitPoints(-1),
-	m_noBulletHits(false),
-	m_initial_pos(ZERO),
-	m_initial_dir(ZERO),
-	m_initial_vel(ZERO),
-	m_seq(0)
 {
 }
 
