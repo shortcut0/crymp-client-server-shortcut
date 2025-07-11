@@ -142,9 +142,7 @@ CWeaponSystem::CWeaponSystem(CGame *pGame, ISystem *pSystem)
 //------------------------------------------------------------------------
 CWeaponSystem::~CWeaponSystem()
 {
-	DumpPoolSizes();
-	while (!m_pools.empty())
-		FreePool(m_pools.begin()->first);
+	FreePools();
 
 	// cleanup current projectiles
 	for (TProjectileMap::iterator pit = m_projectiles.begin(); pit != m_projectiles.end(); ++pit)
@@ -662,16 +660,19 @@ void CWeaponSystem::CheckEnvironmentChanges()
 //------------------------------------------------------------------------
 void CWeaponSystem::CreatePool(IEntityClass* pClass)
 {
-	if (!pClass || m_pools.contains(pClass))
+	TAmmoPoolMap::iterator it = m_pools.find(pClass);
+
+	if (it != m_pools.end())
 		return;
 
-	m_pools.emplace(pClass, SAmmoPoolDesc{});
+	m_pools.insert(TAmmoPoolMap::value_type(pClass, SAmmoPoolDesc()));
 }
 
 //------------------------------------------------------------------------
 void CWeaponSystem::FreePool(IEntityClass* pClass)
 {
-	auto it = m_pools.find(pClass);
+	TAmmoPoolMap::iterator it = m_pools.find(pClass);
+
 	if (it == m_pools.end())
 		return;
 
@@ -692,17 +693,19 @@ void CWeaponSystem::FreePool(IEntityClass* pClass)
 //------------------------------------------------------------------------
 uint16 CWeaponSystem::GetPoolSize(IEntityClass* pClass)
 {
-	auto it = m_pools.find(pClass);
-	return (it != m_pools.end()) ? it->second.size : 0;
+	TAmmoPoolMap::iterator it = m_pools.find(pClass);
+
+	if (it == m_pools.end())
+		return 0;
+
+	return it->second.size;
 }
 
 //------------------------------------------------------------------------
 CProjectile* CWeaponSystem::UseFromPool(IEntityClass* pClass, const SAmmoParams* pAmmoParams)
 {
-	if (!pClass)
-		return nullptr;
+	TAmmoPoolMap::iterator it = m_pools.find(pClass);
 
-	auto it = m_pools.find(pClass);
 	if (it == m_pools.end())
 	{
 		CreatePool(pClass);
@@ -722,47 +725,52 @@ CProjectile* CWeaponSystem::UseFromPool(IEntityClass* pClass, const SAmmoParams*
 		pProjectile->ReInitFromPool();
 		return pProjectile;
 	}
-
-	CProjectile* pProjectile = DoSpawnAmmo(pClass, false, pAmmoParams);
-	if (pProjectile)
+	else
 	{
+		CProjectile* pProjectile = DoSpawnAmmo(pClass, false, pAmmoParams);
 		++desc.size;
-	}
 
-	return pProjectile;
+		return pProjectile;
+	}
 }
 
 //------------------------------------------------------------------------
 bool CWeaponSystem::ReturnToPool(CProjectile* pProjectile)
 {
-	if (!g_pGameCVars->mp_recycleProjectiles || !pProjectile)
-		return false;
+	bool bSuccess = false;
+	IEntityClass* const pProjectileClass = pProjectile->GetEntity()->GetClass();
 
-	IEntityClass* pClass = pProjectile->GetEntity()->GetClass();
-	auto it = m_pools.find(pClass);
-
-	if (it == m_pools.end())
+	if (!m_pools.empty())
 	{
-		CryLogWarningAlways("CWeaponSystem::ReturnToPool(): Pool does not exist for class: %s", pClass ? pClass->GetName() : "<null>");
-		return false;
+		const auto it = m_pools.find(pProjectileClass);
+
+		// It should not happen, but looks like it can some how while load/saving under certain circumstances...
+		if (it != m_pools.end())
+		{
+			it->second.frees.push_back(pProjectile);
+
+			pProjectile->GetEntity()->Hide(true);
+			pProjectile->GetEntity()->SetWorldTM(IDENTITY);
+			bSuccess = true;
+		}
+		else
+		{
+			// Log trace, and return false (projectile will handle it)
+			CryLogWarningAlways("CWeaponSystem::ReturnToPool(): Trying to return projectile to a pool that doesn't exist (Class: %s)", pProjectileClass ? pProjectileClass->GetName() : "NULL");
+		}
+	}
+	else
+	{
+		CryLogWarningAlways("CWeaponSystem::ReturnToPool(): m_pools is empty! (Class: %s)", pProjectileClass ? pProjectileClass->GetName() : "NULL");
 	}
 
-	it->second.frees.push_back(pProjectile);
-
-	pProjectile->GetEntity()->Hide(true);
-	pProjectile->GetEntity()->SetWorldTM(IDENTITY);
-
-	return true;
+	return bSuccess;
 }
 
 //------------------------------------------------------------------------
 void CWeaponSystem::RemoveFromPool(CProjectile* pProjectile)
 {
-	if (!pProjectile || !pProjectile->GetEntity())
-		return;
-
-	IEntityClass* pClass = pProjectile->GetEntity()->GetClass();
-	auto it = m_pools.find(pClass);
+	const auto it = m_pools.find(pProjectile->GetEntity()->GetClass());
 	if (it == m_pools.end())
 		return;
 
@@ -773,13 +781,24 @@ void CWeaponSystem::RemoveFromPool(CProjectile* pProjectile)
 //------------------------------------------------------------------------
 void CWeaponSystem::DumpPoolSizes()
 {
-	CryLogAlways("Ammo Pool Statistics:");
+	CryLogAlways("Ammo Recycler Statistics (%s)", g_pGameCVars->mp_recycleProjectiles ? "enabled" : "disabled");
 	CryLogAlways("%d bullets recycled", m_bulletsRecycled);
 	for (const auto& [pClass, desc] : m_pools)
 	{
 		const char* name = pClass ? pClass->GetName() : "<null>";
 		CryLogAlways("%s: %u", name, desc.size);
 	}
+}
+
+//------------------------------------------------------------------------
+void CWeaponSystem::FreePools()
+{
+	while (!m_pools.empty())
+	{
+		FreePool(m_pools.begin()->first);
+	}
+
+	m_pools.clear();
 }
 
 //----------------------------------------

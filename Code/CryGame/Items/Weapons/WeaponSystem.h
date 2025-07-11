@@ -122,6 +122,7 @@ public:
 	CProjectile *UseFromPool(IEntityClass *pClass, const SAmmoParams *pAmmoParams);
 	bool ReturnToPool(CProjectile *pProjectile);
 	void RemoveFromPool(CProjectile *pProjectile);
+	void FreePools();
 	void DumpPoolSizes();
 
 	void Serialize(TSerialize ser);
@@ -178,7 +179,8 @@ private:
 		uint16_t size;
 	};
 
-	std::unordered_map<IEntityClass*, SAmmoPoolDesc> m_pools;
+	typedef VectorMap<IEntityClass*, SAmmoPoolDesc>	TAmmoPoolMap;
+	TAmmoPoolMap m_pools;
 };
 
 
