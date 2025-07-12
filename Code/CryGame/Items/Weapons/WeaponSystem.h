@@ -11,13 +11,12 @@ History:
 - 18:10:2005   17:41 : Created by Márcio Martins
 
 *************************************************************************/
-#ifndef __WEAPONSYSTEM_H__
-#define __WEAPONSYSTEM_H__
 
-#if _MSC_VER > 1000
-# pragma once
-#endif
+#pragma once
 
+#include <map>
+#include <memory>
+#include <vector>
 
 #include "CryCommon/CryAction/IItemSystem.h"
 #include "CryCommon/CryAction/ILevelSystem.h"
@@ -122,7 +121,6 @@ public:
 	CProjectile *UseFromPool(IEntityClass *pClass, const SAmmoParams *pAmmoParams);
 	bool ReturnToPool(CProjectile *pProjectile);
 	void RemoveFromPool(CProjectile *pProjectile);
-	void FreePools();
 	void DumpPoolSizes();
 
 	void Serialize(TSerialize ser);
@@ -138,10 +136,6 @@ public:
 	}
 
 private: 
-	void CreatePool(IEntityClass *pClass);
-	void FreePool(IEntityClass *pClass);
-	uint16 GetPoolSize(IEntityClass *pClass);
-	
 	CProjectile *DoSpawnAmmo(IEntityClass* pAmmoType, bool isRemote, const SAmmoParams *pAmmoParams);
 
 	CGame								*m_pGame;
@@ -169,20 +163,20 @@ private:
 	bool                m_tokensUpdated;
 
 	EntityId m_lastHostId = 0;
-	int m_bulletsRecycled = 0;
+	std::size_t m_projectilesRecycled = 0;
 
-	struct SAmmoPoolDesc
+	struct ProjectileDeleter
 	{
-		SAmmoPoolDesc() : size(0) {}
-
-		std::deque<CProjectile*> frees;
-		uint16_t size;
+		void operator()(CProjectile* pProjectile) const;
 	};
 
-	typedef VectorMap<IEntityClass*, SAmmoPoolDesc>	TAmmoPoolMap;
-	TAmmoPoolMap m_pools;
+	using SmartProjectile = std::unique_ptr<CProjectile, ProjectileDeleter>;
+
+	struct ProjectilePool
+	{
+		std::size_t totalCount = 0;
+		std::vector<SmartProjectile> freeProjectiles;
+	};
+
+	VectorMap<IEntityClass*, ProjectilePool> m_projectilePools;
 };
-
-
-
-#endif //__WEAPONSYSTEM_H__

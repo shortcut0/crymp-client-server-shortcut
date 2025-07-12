@@ -134,7 +134,7 @@ CWeaponSystem::CWeaponSystem(CGame *pGame, ISystem *pSystem)
 				g_pGame->GetWeaponSystem()->DumpPoolSizes();
 			}
 		},
-		VF_NOT_NET_SYNCED,
+		0,
 		"Dump current ammo pool sizes for debugging"
 	);
 }
@@ -142,8 +142,6 @@ CWeaponSystem::CWeaponSystem(CGame *pGame, ISystem *pSystem)
 //------------------------------------------------------------------------
 CWeaponSystem::~CWeaponSystem()
 {
-	FreePools();
-
 	// cleanup current projectiles
 	for (TProjectileMap::iterator pit = m_projectiles.begin(); pit != m_projectiles.end(); ++pit)
 		gEnv->pEntitySystem->RemoveEntity(pit->first, true);
@@ -658,147 +656,80 @@ void CWeaponSystem::CheckEnvironmentChanges()
 }
 
 //------------------------------------------------------------------------
-void CWeaponSystem::CreatePool(IEntityClass* pClass)
-{
-	TAmmoPoolMap::iterator it = m_pools.find(pClass);
-
-	if (it != m_pools.end())
-		return;
-
-	m_pools.insert(TAmmoPoolMap::value_type(pClass, SAmmoPoolDesc()));
-}
-
-//------------------------------------------------------------------------
-void CWeaponSystem::FreePool(IEntityClass* pClass)
-{
-	TAmmoPoolMap::iterator it = m_pools.find(pClass);
-
-	if (it == m_pools.end())
-		return;
-
-	SAmmoPoolDesc& desc = it->second;
-
-	while (!desc.frees.empty())
-	{
-		CProjectile* pFree = desc.frees.front();
-		desc.frees.pop_front();
-
-		gEnv->pEntitySystem->RemoveEntity(pFree->GetEntityId(), true);
-		--desc.size;
-	}
-
-	m_pools.erase(it);
-}
-
-//------------------------------------------------------------------------
-uint16 CWeaponSystem::GetPoolSize(IEntityClass* pClass)
-{
-	TAmmoPoolMap::iterator it = m_pools.find(pClass);
-
-	if (it == m_pools.end())
-		return 0;
-
-	return it->second.size;
-}
-
-//------------------------------------------------------------------------
 CProjectile* CWeaponSystem::UseFromPool(IEntityClass* pClass, const SAmmoParams* pAmmoParams)
 {
-	TAmmoPoolMap::iterator it = m_pools.find(pClass);
-
-	if (it == m_pools.end())
-	{
-		CreatePool(pClass);
-		it = m_pools.find(pClass);
-	}
-
-	SAmmoPoolDesc& desc = it->second;
-
-	if (!desc.frees.empty())
-	{
-		++m_bulletsRecycled;
-
-		CProjectile* pProjectile = desc.frees.front();
-		desc.frees.pop_front();
-
-		pProjectile->GetEntity()->Hide(false);
-		pProjectile->ReInitFromPool();
-		return pProjectile;
-	}
-	else
+	ProjectilePool& pool = m_projectilePools[pClass];
+	if (pool.freeProjectiles.empty())
 	{
 		CProjectile* pProjectile = DoSpawnAmmo(pClass, false, pAmmoParams);
-		++desc.size;
+		pool.totalCount++;
 
 		return pProjectile;
 	}
+
+	// use hot projectiles (last inserted) first to potentially reduce CPU cache misses
+	CProjectile* pProjectile = pool.freeProjectiles.back().release();
+	pool.freeProjectiles.pop_back();
+
+	pProjectile->GetEntity()->Hide(false);
+	pProjectile->ReInitFromPool();
+
+	m_projectilesRecycled++;
+
+	return pProjectile;
 }
 
 //------------------------------------------------------------------------
 bool CWeaponSystem::ReturnToPool(CProjectile* pProjectile)
 {
-	bool bSuccess = false;
-	IEntityClass* const pProjectileClass = pProjectile->GetEntity()->GetClass();
+	IEntityClass* pClass = pProjectile->GetEntity()->GetClass();
 
-	if (!m_pools.empty())
+	const auto it = m_projectilePools.find(pClass);
+	if (it == m_projectilePools.end())
 	{
-		const auto it = m_pools.find(pProjectileClass);
-
-		// It should not happen, but looks like it can some how while load/saving under certain circumstances...
-		if (it != m_pools.end())
-		{
-			it->second.frees.push_back(pProjectile);
-
-			pProjectile->GetEntity()->Hide(true);
-			pProjectile->GetEntity()->SetWorldTM(IDENTITY);
-			bSuccess = true;
-		}
-		else
-		{
-			// Log trace, and return false (projectile will handle it)
-			CryLogWarningAlways("CWeaponSystem::ReturnToPool(): Trying to return projectile to a pool that doesn't exist (Class: %s)", pProjectileClass ? pProjectileClass->GetName() : "NULL");
-		}
-	}
-	else
-	{
-		CryLogWarningAlways("CWeaponSystem::ReturnToPool(): m_pools is empty! (Class: %s)", pProjectileClass ? pProjectileClass->GetName() : "NULL");
+		const char* name = pClass ? pClass->GetName() : "NULL";
+		CryLogWarningAlways("%s: Missing pool for projectile class %s", __FUNCTION__, name);
+		return false;
 	}
 
-	return bSuccess;
+	it->second.freeProjectiles.emplace_back(SmartProjectile(pProjectile));
+
+	pProjectile->GetEntity()->Hide(true);
+	pProjectile->GetEntity()->SetWorldTM(IDENTITY);
+
+	return true;
 }
 
 //------------------------------------------------------------------------
 void CWeaponSystem::RemoveFromPool(CProjectile* pProjectile)
 {
-	const auto it = m_pools.find(pProjectile->GetEntity()->GetClass());
-	if (it == m_pools.end())
-		return;
+	IEntityClass* pClass = pProjectile->GetEntity()->GetClass();
 
-	if (stl::find_and_erase(it->second.frees, pProjectile))
-		--it->second.size;
+	const auto it = m_projectilePools.find(pClass);
+	if (it == m_projectilePools.end())
+	{
+		return;
+	}
+
+	std::erase_if(it->second.freeProjectiles, [&](const SmartProjectile& x) { return x.get() == pProjectile; });
+	it->second.totalCount--;
 }
 
 //------------------------------------------------------------------------
 void CWeaponSystem::DumpPoolSizes()
 {
-	CryLogAlways("Ammo Recycler Statistics (%s)", g_pGameCVars->mp_recycleProjectiles ? "enabled" : "disabled");
-	CryLogAlways("%d bullets recycled", m_bulletsRecycled);
-	for (const auto& [pClass, desc] : m_pools)
-	{
-		const char* name = pClass ? pClass->GetName() : "<null>";
-		CryLogAlways("%s: %u", name, desc.size);
-	}
-}
+	CryLogAlways("------------------------ Projectile Recycler Statistics ------------------------");
 
-//------------------------------------------------------------------------
-void CWeaponSystem::FreePools()
-{
-	while (!m_pools.empty())
+	CryLogAlways("Recycling %s", g_pGameCVars->mp_recycleProjectiles ? "enabled" : "disabled");
+	CryLogAlways("Projectiles recycled: %zu", m_projectilesRecycled);
+
+	for (const auto& [pClass, pool] : m_projectilePools)
 	{
-		FreePool(m_pools.begin()->first);
+		const char* name = pClass ? pClass->GetName() : "NULL";
+		CryLogAlways("%s: totalCount=%zu, freeCount=%zu", name, pool.totalCount, pool.freeProjectiles.size());
 	}
 
-	m_pools.clear();
+	CryLogAlways("--------------------------------------------------------------------------------");
 }
 
 //----------------------------------------
@@ -853,4 +784,9 @@ void CWeaponSystem::GetMemoryStatistics(ICrySizer * s)
 		}
 		s->AddObject(&m_projectiles,nSize);
 	}
+}
+
+void CWeaponSystem::ProjectileDeleter::operator()(CProjectile* pProjectile) const
+{
+	gEnv->pEntitySystem->RemoveEntity(pProjectile->GetEntityId(), true);
 }
