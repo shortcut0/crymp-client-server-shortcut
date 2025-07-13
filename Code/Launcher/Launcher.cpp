@@ -16,6 +16,7 @@
 #include "CryMP/Server/Server.h"
 #include "CryScriptSystem/ScriptSystem.h"
 #include "CrySystem/CPUInfo.h"
+#include "CrySystem/CrashTest.h"
 #include "CrySystem/CryMemoryManager.h"
 #include "CrySystem/CryPak.h"
 #include "CrySystem/GameWindow.h"
@@ -717,6 +718,23 @@ static void HookNetworkGetService(void* pCryNetwork)
 	WinAPI::FillMem(&pCNetworkVTable[7], &reinterpret_cast<void*&>(pNewGetService), sizeof(void*));
 }
 
+static void LogRealWindowsBuild(Logger& logger)
+{
+	void* kernel32 = WinAPI::DLL::Get("kernel32.dll");
+	if (!kernel32)
+	{
+		return;
+	}
+
+	WinAPI::VersionResource ver;
+	if (!WinAPI::GetVersionResource(kernel32, ver))
+	{
+		return;
+	}
+
+	logger.LogAlways("Windows build: %hu.%hu.%hu (real)", ver.major, ver.minor, ver.patch);
+}
+
 static void EnableHiddenProfilerSubsystems(ISystem* pSystem)
 {
 	struct Subsystem
@@ -876,13 +894,15 @@ void Launcher::LoadEngine()
 		}
 	}
 
-	const int gameVersion = WinAPI::GetCrysisGameBuild(m_dlls.pCrySystem);
-	if (gameVersion < 0)
+	WinAPI::VersionResource version;
+	if (!WinAPI::GetVersionResource(m_dlls.pCrySystem, version))
 	{
 		throw StringTools::SysErrorFormat("Failed to get the game version!");
 	}
 
-	switch (gameVersion)
+	const int gameBuild = version.tweak;
+
+	switch (gameBuild)
 	{
 		case 5767:
 		{
@@ -927,7 +947,7 @@ void Launcher::LoadEngine()
 		}
 		default:
 		{
-			throw StringTools::ErrorFormat("Unknown game version %d!", gameVersion);
+			throw StringTools::ErrorFormat("Unknown game build %d!", gameBuild);
 		}
 	}
 
@@ -1208,7 +1228,15 @@ void Launcher::OnEarlyEngineInit(ISystem* pSystem)
 	logger.SetVerbosity(verbosity);
 	logger.OpenFile((rootDirPath.empty() ? userDirPath : rootDirPath) / logFileName);
 
-	CrashLogger::Enable(&ProvideLogFile, &CryMemoryManager::ProvideHeapInfo);
+#ifdef CLIENT_LAUNCHER
+	const char* banner = "CryMP Client " CRYMP_VERSION_STRING " " CRYMP_BITS " " CRYMP_BUILD_TYPE;
+#else
+	const char* banner = "CryMP Server " CRYMP_VERSION_STRING " " CRYMP_BITS " " CRYMP_BUILD_TYPE;
+#endif
+
+	CrashLogger::Enable(&ProvideLogFile, &CryMemoryManager::ProvideHeapInfo, banner);
+
+	CrashTest::Register();
 
 	logger.LogAlways("Log begins at %s", Logger::FormatPrefix("%F %T%z").c_str());
 
@@ -1226,17 +1254,15 @@ void Launcher::OnEarlyEngineInit(ISystem* pSystem)
 	const SFileVersion& version = gEnv->pSystem->GetProductVersion();
 
 	logger.LogAlways("Crysis %d.%d.%d.%d " CRYMP_BITS, version[3], version[2], version[1], version[0]);
-#ifdef CLIENT_LAUNCHER
-	logger.LogAlways("CryMP Client " CRYMP_VERSION_STRING " " CRYMP_BITS " " CRYMP_BUILD_TYPE);
-#else
-	logger.LogAlways("CryMP Server " CRYMP_VERSION_STRING " " CRYMP_BITS " " CRYMP_BUILD_TYPE);
-#endif
+	logger.LogAlways("%s", banner);
 	logger.LogAlways("Compiled by " CRYMP_COMPILER);
 	logger.LogAlways("Copyright (C) 2001-2008 Crytek GmbH");
 	logger.LogAlways("Copyright (C) 2014-2025 CryMP");
 	logger.LogAlways("");
 
 	logger.SetPrefix(logPrefix);
+
+	LogRealWindowsBuild(logger);
 
 	EnableHiddenProfilerSubsystems(pSystem);
 

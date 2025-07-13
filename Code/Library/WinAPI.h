@@ -82,9 +82,17 @@ namespace WinAPI
 	// Resources //
 	///////////////
 
-	std::string_view GetDataResource(void *pDLL, int resourceID);
+	struct VersionResource
+	{
+		unsigned short major = 0;
+		unsigned short minor = 0;
+		unsigned short patch = 0;
+		unsigned short tweak = 0;
+	};
 
-	int GetCrysisGameBuild(void *pDLL);
+	bool GetVersionResource(void* pDLL, VersionResource& result);
+
+	std::string_view GetDataResource(void *pDLL, int resourceID);
 
 	///////////
 	// Hacks //
