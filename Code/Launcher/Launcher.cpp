@@ -1170,6 +1170,8 @@ void Launcher::StartEngine()
 		}
 	}
 
+	CrashTest::Register();
+
 #ifdef CRYMP_TRACY_ENABLED
 	TracyHookEngineProfiler();
 #endif
@@ -1235,8 +1237,6 @@ void Launcher::OnEarlyEngineInit(ISystem* pSystem)
 #endif
 
 	CrashLogger::Enable(&ProvideLogFile, &CryMemoryManager::ProvideHeapInfo, banner);
-
-	CrashTest::Register();
 
 	logger.LogAlways("Log begins at %s", Logger::FormatPrefix("%F %T%z").c_str());
 
