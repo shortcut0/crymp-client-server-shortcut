@@ -196,11 +196,15 @@ namespace
 	{
 		HRSRC resourceInfo = FindResourceA(static_cast<HMODULE>(pDLL), name, type);
 		if (!resourceInfo)
-			return std::string_view();
+		{
+			return {};
+		}
 
 		HGLOBAL resourceData = LoadResource(static_cast<HMODULE>(pDLL), resourceInfo);
 		if (!resourceData)
-			return std::string_view();
+		{
+			return {};
+		}
 
 		const void *data = LockResource(resourceData);
 		size_t length = SizeofResource(static_cast<HMODULE>(pDLL), resourceInfo);
@@ -209,31 +213,40 @@ namespace
 	}
 }
 
+bool WinAPI::GetVersionResource(void* pDLL, VersionResource& result)
+{
+	const void* versionRes = GetResource(pDLL, MAKEINTRESOURCE(VS_VERSION_INFO), RT_VERSION).data();
+	if (!versionRes)
+	{
+		return false;
+	}
+
+	const void* versionResKey = static_cast<const unsigned char*>(versionRes) + 0x6;
+	if (memcmp(versionResKey, L"VS_VERSION_INFO", 0x20) != 0)
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return false;
+	}
+
+	const void* versionResValue = static_cast<const unsigned char*>(versionResKey) + 0x20 + 0x2;
+	const VS_FIXEDFILEINFO* fileInfo = static_cast<const VS_FIXEDFILEINFO*>(versionResValue);
+	if (fileInfo->dwSignature != 0xFEEF04BD)
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return false;
+	}
+
+	result.major = HIWORD(fileInfo->dwProductVersionMS);
+	result.minor = LOWORD(fileInfo->dwProductVersionMS);
+	result.patch = HIWORD(fileInfo->dwProductVersionLS);
+	result.tweak = LOWORD(fileInfo->dwProductVersionLS);
+
+	return true;
+}
+
 std::string_view WinAPI::GetDataResource(void *pDLL, int resourceID)
 {
 	return GetResource(pDLL, MAKEINTRESOURCE(resourceID), RT_RCDATA);
-}
-
-/**
- * @brief Obtains game version from any Crysis DLL.
- * It parses version resource of the specified file.
- * @param pDLL Handle of any Crysis DLL.
- * @return Game build number or -1 if some error occurred.
- */
-int WinAPI::GetCrysisGameBuild(void *pDLL)
-{
-	const void *versionRes = GetResource(pDLL, MAKEINTRESOURCE(VS_VERSION_INFO), RT_VERSION).data();
-	if (!versionRes)
-		return -1;
-
-	if (memcmp(RVA(versionRes, 0x6), L"VS_VERSION_INFO", 0x20) != 0)
-		return -1;
-
-	const VS_FIXEDFILEINFO *pFileInfo = static_cast<const VS_FIXEDFILEINFO*>(RVA(versionRes, 0x6 + 0x20 + 0x2));
-	if (pFileInfo->dwSignature != 0xFEEF04BD)
-		return -1;
-
-	return LOWORD(pFileInfo->dwFileVersionLS);
 }
 
 ///////////
@@ -337,14 +350,14 @@ void WinAPI::HookWithJump(void* address, void* pNewFunc)
 		0xFF, 0xE0                                                   // jmp rax
 	};
 
-	std::memcpy(&code[2], &pNewFunc, 8);
+	memcpy(&code[2], &pNewFunc, 8);
 #else
 	unsigned char code[] = {
 		0xB8, 0x00, 0x00, 0x00, 0x00,  // mov eax, 0x0
 		0xFF, 0xE0                     // jmp eax
 	};
 
-	std::memcpy(&code[1], &pNewFunc, 4);
+	memcpy(&code[1], &pNewFunc, 4);
 #endif
 
 	FillMem(address, &code, sizeof(code));
