@@ -3,8 +3,8 @@
 #include "CryCommon/CryAction/IGameFramework.h"
 #include "CryCommon/CryAction/ILevelSystem.h"
 #include "CrySystem/CryPak.h"
+#include "Library/StdFile.h"
 #include "Library/Util.h"
-#include "Library/WinAPI.h"
 
 #include "MapDownloader.h"
 #include "MapExtractor.h"
@@ -152,41 +152,25 @@ bool MapDownloader::CheckMapExists(const std::string_view & mapName)
 
 bool MapDownloader::CheckMapVersion(const std::string_view & mapName, const std::string_view & mapVersion)
 {
-	if (mapVersion.empty())
+	StdFile file(GetVersionFilePath(mapName).string().c_str(), "rb");
+	if (!file.IsOpen())
 	{
-		return true;
+		return mapVersion.empty();
 	}
 
-	const std::filesystem::path versionFilePath = GetVersionFilePath(mapName);
-
-	try
-	{
-		WinAPI::File file(versionFilePath, WinAPI::FileAccess::READ_ONLY);
-
-		return file.IsOpen() && file.Read() == mapVersion;
-	}
-	catch (const CryMP_Error& error)
-	{
-		CryLogAlways("$4[CryMP] [MapDownloader] Failed to read map version: %s", error.what());
-		return false;
-	}
+	return file.ReadAll() == mapVersion;
 }
 
 void MapDownloader::StoreMapVersion(const std::string_view & mapName, const std::string_view & mapVersion)
 {
-	const std::filesystem::path versionFilePath = GetVersionFilePath(mapName);
-
-	try
+	StdFile file(GetVersionFilePath(mapName).string().c_str(), "wb");
+	if (!file.IsOpen())
 	{
-		WinAPI::File file(versionFilePath, WinAPI::FileAccess::WRITE_ONLY_CREATE);
+		CryLogAlways("$4[CryMP] [MapDownloader] Failed to open map version file for writing");
+		return;
+	}
 
-		file.Resize(0);
-		file.Write(mapVersion);
-	}
-	catch (const CryMP_Error& error)
-	{
-		CryLogAlways("$4[CryMP] [MapDownloader] Failed to store map version: %s", error.what());
-	}
+	file.Write(mapVersion.data(), mapVersion.length());
 }
 
 std::filesystem::path MapDownloader::GetVersionFilePath(const std::string_view & mapName)

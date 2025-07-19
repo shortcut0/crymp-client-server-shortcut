@@ -9,7 +9,7 @@
 #include "CryGame/Game.h"
 #include "CryGame/Items/ItemSharedParams.h"
 #include "CryGame/Items/Weapons/WeaponSystem.h"
-#include "Library/WinAPI.h"
+#include "Library/StdFile.h"
 
 #include "ServerPAK.h"
 
@@ -21,18 +21,18 @@ ServerPAK::~ServerPAK()
 {
 }
 
-bool ServerPAK::IsZipFile(const std::string & path)
+bool ServerPAK::IsZipFile(const std::string& path)
 {
-	try
-	{
-		WinAPI::File file(path, WinAPI::FileAccess::READ_ONLY);
-
-		return file.IsOpen() && file.Read(2) == "PK";
-	}
-	catch (...)
+	StdFile file(path.c_str(), "rb");
+	if (!file.IsOpen())
 	{
 		return false;
 	}
+
+	char buffer[2] = {};
+	file.Read(buffer, sizeof(buffer));
+
+	return buffer[0] == 'P' && buffer[1] == 'K';
 }
 
 bool ServerPAK::Load(const std::string & path)

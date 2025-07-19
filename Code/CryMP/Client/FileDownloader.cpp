@@ -2,6 +2,7 @@
 #include <chrono>
 
 #include "CryMP/Common/Executor.h"
+#include "Library/StdFile.h"
 #include "Library/StringTools.h"
 #include "Library/Util.h"
 #include "Library/WinAPI.h"
@@ -9,33 +10,6 @@
 #include "FileDownloader.h"
 #include "SpeedAggregator.h"
 #include "Client.h"
-
-class OutputFile
-{
-	WinAPI::File m_file;
-
-public:
-	OutputFile(const std::filesystem::path & path)
-	{
-		bool created = false;
-
-		if (!m_file.Open(path, WinAPI::FileAccess::WRITE_ONLY_CREATE, &created))
-		{
-			throw StringTools::SysErrorFormat("Failed to open the output file");
-		}
-
-		if (!created)
-		{
-			// clear the existing file
-			m_file.Resize(0);
-		}
-	}
-
-	void Write(const char *chunk, size_t chunkLength)
-	{
-		m_file.Write(std::string_view(chunk, chunkLength));
-	}
-};
 
 struct FileDownloaderTask : public IExecutorTask
 {
@@ -77,15 +51,19 @@ struct FileDownloaderTask : public IExecutorTask
 
 		try
 		{
-			OutputFile file(request.filePath);
-
 			result.statusCode = WinAPI::HTTPRequest(
 				"GET",
 				request.url,
 				{},  // data
 				{},  // headers
-				[this, &file](uint64_t contentLength, const WinAPI::HTTPRequestReader & reader)
+				[this](uint64_t contentLength, const WinAPI::HTTPRequestReader& reader)
 				{
+					StdFile file(request.filePath.string().c_str(), "wb");
+					if (!file.IsOpen())
+					{
+						throw StringTools::SysErrorErrnoFormat("Output file open failed");
+					}
+
 					// content length is zero if not provided by the server
 					result.contentLength = contentLength;
 
@@ -93,9 +71,10 @@ struct FileDownloaderTask : public IExecutorTask
 					{
 						char chunk[8192];
 						const size_t chunkLength = reader(chunk, sizeof chunk);
-
 						if (chunkLength == 0)
+						{
 							break;
+						}
 
 						file.Write(chunk, chunkLength);
 						result.downloadedBytes += chunkLength;
