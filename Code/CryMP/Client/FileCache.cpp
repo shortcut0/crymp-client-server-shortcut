@@ -49,7 +49,7 @@ void FileCache::DownloadFile(FileCacheRequest && request, const std::filesystem:
 {
 	FileDownloaderRequest download;
 	download.url = request.fileURL;
-	download.filePath = filePath;
+	download.filePath = FileDownloaderRequest::MakeFileNameUnique(filePath); // temporary file during download
 
 	CryLogAlways("$3[CryMP] [FileCache] Downloading from $6%s$3", download.url.c_str());
 
@@ -61,7 +61,7 @@ void FileCache::DownloadFile(FileCacheRequest && request, const std::filesystem:
 			return true;
 	};
 
-	download.onComplete = [request = std::move(request), this](FileDownloaderResult & result)
+	download.onComplete = [request = std::move(request), finalPath = filePath, this](FileDownloaderResult & result)
 	{
 		bool success = false;
 
@@ -95,12 +95,27 @@ void FileCache::DownloadFile(FileCacheRequest && request, const std::filesystem:
 			success = true;
 		}
 
+		if (success)
+		{
+			// rename the temporary file
+			// no exceptions
+			std::error_code error;
+			std::filesystem::rename(result.filePath, finalPath, error);
+			if (error)
+			{
+				CryLogAlways("$4[CryMP] [FileCache] Renaming temporary file failed: Error %d (%s)",
+					error.value(), error.message().c_str());
+
+				success = false;
+			}
+		}
+
 		if (!success)
 		{
 			RemoveFile(result.filePath);
 		}
 
-		CompleteRequest(request, success, result.filePath);
+		CompleteRequest(request, success, finalPath);
 	};
 
 	gClient->GetFileDownloader()->Request(std::move(download));

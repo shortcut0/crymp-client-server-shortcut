@@ -2,6 +2,7 @@
 #include <chrono>
 
 #include "CryMP/Common/Executor.h"
+#include "CrySystem/RandomGenerator.h"
 #include "Library/StdFile.h"
 #include "Library/StringTools.h"
 #include "Library/Util.h"
@@ -119,6 +120,38 @@ std::string FileDownloaderProgress::ToString() const
 	{
 		return StringTools::Format("?? (%s/s, ??)", speedString.c_str());
 	}
+}
+
+std::string FileDownloaderRequest::CreateUniqueFileName(std::string_view baseName, std::string_view extension)
+{
+	std::string name(baseName);
+
+	// lowercase
+	StringTools::ToLowerInPlace(name);
+
+	// sanitize
+	for (char& ch : name)
+	{
+		if (!(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'z'))
+		{
+			ch = '_';
+		}
+	}
+
+	// add a random suffix for uniqueness
+	StringTools::FormatTo(name, "_%09u", RandomGenerator::GenerateUInt32(0, 999'999'999));
+
+	// extension
+	name += extension;
+
+	return name;
+}
+
+std::filesystem::path FileDownloaderRequest::MakeFileNameUnique(const std::filesystem::path& path)
+{
+	std::filesystem::path newPath(path);
+	newPath.replace_filename(CreateUniqueFileName(path.filename().string(), path.extension().string()));
+	return newPath;
 }
 
 FileDownloader::FileDownloader()

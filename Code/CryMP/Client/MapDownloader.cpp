@@ -13,12 +13,9 @@
 
 void MapDownloader::DownloadMap(MapDownloaderRequest && request)
 {
-	// convert "multiplayer/ps/mymap" to "mymap.zip"
-	const std::string zipFileName = std::filesystem::path(request.map).filename().string() + ".zip";
-
 	FileDownloaderRequest download;
 	download.url = request.mapURL;
-	download.filePath = m_downloadDir / zipFileName;
+	download.filePath = m_downloadDir / FileDownloaderRequest::CreateUniqueFileName(request.map, ".zip");
 
 	CryLogAlways("$3[CryMP] [MapDownloader] Downloading map $6%s$3", request.map.c_str());
 
