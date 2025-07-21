@@ -626,6 +626,8 @@ add_library(Base OBJECT
 	Code/Library/PathTools.h
 	Code/Library/PathTree.h
 	Code/Library/SlotVector.h
+	Code/Library/StdFile.cpp
+	Code/Library/StdFile.h
 	Code/Library/StlportMap.h
 	Code/Library/StlportSet.h
 	Code/Library/StlportVector.h

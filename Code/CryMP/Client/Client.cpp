@@ -15,6 +15,7 @@
 #include "CrySystem/Logger.h"
 #include "CrySystem/RandomGenerator.h"
 #include "Launcher/Resources.h"
+#include "Library/StdFile.h"
 #include "Library/StringTools.h"
 #include "Library/Util.h"
 #include "Library/WinAPI.h"
@@ -40,19 +41,11 @@ void Client::InitMasters()
 {
 	std::string content;
 
-	WinAPI::File file("masters.txt", WinAPI::FileAccess::READ_ONLY);  // Crysis main directory
-	if (file)
+	if (StdFile file("masters.txt", "r"); file.IsOpen())  // Crysis main directory
 	{
 		CryLogAlways("$6[CryMP] Using local masters.txt as the master server list provider");
 
-		try
-		{
-			content = file.Read();
-		}
-		catch (const std::exception& ex)
-		{
-			CryLogAlways("$4[CryMP] Failed to read the masters.txt file: %s", ex.what());
-		}
+		content = file.ReadAll();
 	}
 	else
 	{
