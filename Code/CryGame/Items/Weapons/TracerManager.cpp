@@ -185,28 +185,38 @@ void CTracerManager::EmitTracer(const STracerParams& params)
     int idx = -1;
     const int poolSize = static_cast<int>(m_pool.size());
     int i = m_lastFree + 1;
+    if (i >= poolSize)
+        i = 0;
 
-    while (true)
+    bool foundFree = false;
+
+    // Search for a tracer to reuse
+    for (int attempts = 0; attempts < poolSize; ++attempts)
     {
-        if (i >= poolSize) i = 0;
-        if (i == m_lastFree)
-        {
-            m_pool.emplace_back(std::make_unique<CTracer>(params.position));
-            idx = static_cast<int>(m_pool.size() - 1);
-            break;
-        }
-
         IEntity* pEntity = gEnv->pEntitySystem->GetEntity(m_pool[i]->m_entityId);
         if (pEntity && pEntity->IsHidden())
         {
             m_pool[i]->Reset(params.position);
             idx = i;
+            ++m_numReused;
+            foundFree = true;
             break;
         }
+
         ++i;
+        if (i >= poolSize)
+            i = 0;
+    }
+
+    if (!foundFree)
+    {
+        m_pool.emplace_back(std::make_unique<CTracer>(params.position));
+        idx = static_cast<int>(m_pool.size()) - 1;
+        ++m_numAllocated;
     }
 
     m_lastFree = idx;
+
     CTracer* tracer = m_pool[idx].get();
 
     if (params.geometry && params.geometry[0])
@@ -263,6 +273,7 @@ void CTracerManager::Reset()
     m_pool.clear();
     m_updating.clear();
     m_actives.clear();
+    m_lastFree = 0;
 }
 
 void CTracerManager::GetMemoryStatistics(ICrySizer* s)
