@@ -729,6 +729,22 @@ void CWeaponSystem::DumpPoolSizes()
 		CryLogAlways("%s: totalCount=%zu, freeCount=%zu", name, pool.totalCount, pool.freeProjectiles.size());
 	}
 
+	CryLogAlways("------------------------ Tracer Manager Statistics -----------------------------");
+
+	CTracerManager& pTracerMgr = GetTracerManager();
+
+	const size_t total = pTracerMgr.GetPoolSize();
+	const size_t actives = pTracerMgr.GetActiveCount();
+	const int lastFree = pTracerMgr.GetLastFreeIndex();
+	const int reused = pTracerMgr.GetNumReused();
+	const int allocated = pTracerMgr.GetNumAllocated();
+
+	CryLogAlways("Total Allocated (in pool): %zu", total);
+	CryLogAlways("Currently Active: %zu", actives);
+	CryLogAlways("Reused: %d", reused);
+	CryLogAlways("Newly Spawned: %d", allocated);
+	CryLogAlways("Last Free Index: %d", lastFree);
+
 	CryLogAlways("--------------------------------------------------------------------------------");
 }
 
