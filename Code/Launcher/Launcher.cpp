@@ -1199,11 +1199,13 @@ void Launcher::StartEngine()
 
 	StartupTime::Finish();
 	CryLogAlways("Startup finished in %.3f seconds", StartupTime::GetSeconds());
+#ifdef SERVER_LAUNCHER
 	if (oldAction) {
 		CryLogAlways("[CryMP] Using old CryAction");
 	} else {
 		CryLogAlways("[CryMP] Using new CryAction");
 	}
+#endif
 
 	gEnv->pSystem->ExecuteCommandLine();
 }
