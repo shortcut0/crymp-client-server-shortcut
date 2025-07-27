@@ -845,8 +845,7 @@ void CWeaponSystem::RemoveFromPool(CProjectile* pProjectile)
 		return;
 	}
 
-	std::erase_if(it->second.freeProjectiles, [&](const SmartProjectile& x) { return x.get() == pProjectile; });
-	it->second.totalCount--;
+	it->second.totalCount -= std::erase_if(it->second.freeProjectiles, [&](const SmartProjectile& x) { return x.get() == pProjectile; });
 }
 
 //------------------------------------------------------------------------
@@ -862,6 +861,20 @@ void CWeaponSystem::DumpPoolSizes()
 		const char* name = pClass ? pClass->GetName() : "NULL";
 		CryLogAlways("%s: totalCount=%zu, freeCount=%zu", name, pool.totalCount, pool.freeProjectiles.size());
 	}
+
+	CryLogAlways("------------------------ Tracer Manager Statistics -----------------------------");
+
+	CTracerManager& pTracerMgr = GetTracerManager();
+
+	const size_t total = pTracerMgr.GetPoolSize();
+	const size_t actives = pTracerMgr.GetActiveCount();
+	const unsigned int reused = pTracerMgr.GetNumReused();
+	const unsigned int allocated = pTracerMgr.GetNumAllocated();
+
+	CryLogAlways("Total Allocated (in pool): %zu", total);
+	CryLogAlways("Currently Active: %zu", actives);
+	CryLogAlways("Reused: %u", reused);
+	CryLogAlways("Newly Spawned: %u", allocated);
 
 	CryLogAlways("--------------------------------------------------------------------------------");
 }
