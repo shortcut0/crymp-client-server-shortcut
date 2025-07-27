@@ -734,13 +734,13 @@ void CWeaponSystem::DumpPoolSizes()
 
 	const size_t total = pTracerMgr.GetPoolSize();
 	const size_t actives = pTracerMgr.GetActiveCount();
-	const int reused = pTracerMgr.GetNumReused();
-	const int allocated = pTracerMgr.GetNumAllocated();
+	const unsigned int reused = pTracerMgr.GetNumReused();
+	const unsigned int allocated = pTracerMgr.GetNumAllocated();
 
 	CryLogAlways("Total Allocated (in pool): %zu", total);
 	CryLogAlways("Currently Active: %zu", actives);
-	CryLogAlways("Reused: %d", reused);
-	CryLogAlways("Newly Spawned: %d", allocated);
+	CryLogAlways("Reused: %u", reused);
+	CryLogAlways("Newly Spawned: %u", allocated);
 
 	CryLogAlways("--------------------------------------------------------------------------------");
 }
