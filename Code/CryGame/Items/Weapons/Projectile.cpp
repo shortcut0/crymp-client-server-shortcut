@@ -698,7 +698,6 @@ void CProjectile::Destroy()
 
 	EndScaledEffect(m_pAmmoParams->pScaledEffect);
 
-	GetGameObject()->ReleaseProfileManager(this);
 	GetGameObject()->EnablePhysicsEvent(false, eEPE_OnCollisionLogged);
 
 	if (m_obstructObject)
