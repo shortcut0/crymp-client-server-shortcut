@@ -563,11 +563,10 @@ void CGameRules::ClientExplosion(const ExplosionInfo& explosionInfo)
 		// call hit listeners if any
 		if (m_hitListeners.empty() == false)
 		{
-			THitListenerVec::iterator iter = m_hitListeners.begin();
-			while (iter != m_hitListeners.end())
+			m_hitListenersCopy = m_hitListeners;
+			for (auto& iter : m_hitListenersCopy)
 			{
-				(*iter)->OnExplosion(explosionInfo);
-				++iter;
+				iter->OnExplosion(explosionInfo);
 			}
 		}
 	}
