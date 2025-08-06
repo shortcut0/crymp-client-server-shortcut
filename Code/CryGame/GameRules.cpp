@@ -346,8 +346,8 @@ void CGameRules::Update(SEntityUpdateContext& ctx, int updateSlot)
 		if (gEnv->bMultiplayer)
 		{
 			if (m_frozen.size() > 0) {
-				m_frozenCopy = m_frozen;
-				for (TFrozenEntities::const_iterator fit = m_frozenCopy.begin(); fit != m_frozenCopy.end(); fit++)
+				std::map<EntityId, CTimeValue> frozenCopy = m_frozen;
+				for (const auto& [entityId, freezeTime] : frozenCopy)
 				{
 					// unfreeze vehicles after 750ms
 					if ((gEnv->pTimer->GetFrameStartTime() - fit->second).GetMilliSeconds() >= 750)
