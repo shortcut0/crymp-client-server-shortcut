@@ -350,19 +350,19 @@ void CGameRules::Update(SEntityUpdateContext& ctx, int updateSlot)
 				for (const auto& [entityId, freezeTime] : frozenCopy)
 				{
 					// unfreeze vehicles after 750ms
-					if ((gEnv->pTimer->GetFrameStartTime() - fit->second).GetMilliSeconds() >= 750)
+					if ((gEnv->pTimer->GetFrameStartTime() - freezeTime).GetMilliSeconds() >= 750)
 					{
 						bool unfreeze = false;
-						if (m_pGameFramework->GetIVehicleSystem()->GetVehicle(fit->first))
+						if (m_pGameFramework->GetIVehicleSystem()->GetVehicle(entityId))
 							unfreeze = true;
-						else if (IItem* pItem = m_pGameFramework->GetIItemSystem()->GetItem(fit->first))
+						else if (IItem* pItem = m_pGameFramework->GetIItemSystem()->GetItem(entityId))
 						{
 							if ((!pItem->GetOwnerId()) || (pItem->GetOwnerId() == pItem->GetEntityId()))
 								unfreeze = true;
 						}
 
 						if (unfreeze)
-							FreezeEntity(fit->first, false, false);
+							FreezeEntity(entityId, false, false);
 					}
 				}
 			}

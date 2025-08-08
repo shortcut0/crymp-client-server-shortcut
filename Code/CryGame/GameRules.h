@@ -1140,7 +1140,6 @@ protected:
 
 	std::vector<int>		m_channelIds;
 	TFrozenEntities			m_frozen;
-	TFrozenEntities			m_frozenCopy;
 	
 	TTeamIdMap					m_teams;
 	TEntityTeamIdMap		m_entityteams;
