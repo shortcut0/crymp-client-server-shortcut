@@ -202,3 +202,53 @@ namespace WinAPI
 		void ConvertPosToScreen(void* window, long& x, long& y);
 	}
 }
+
+
+
+//////////////////////////
+// Shortcut0 Server Stats
+// I DONT KNOW HOW TO MOVE
+// THIS ELSEWHERE WITHOUT
+// FIVE BILLION ERRORS :(
+//////////////////////////
+
+class SC_ServerStats
+{
+public:
+
+	std::string m_cpuName;
+
+	float m_updateTime = 0.0f;
+	float m_cpuUsage = 0.0f;
+
+	// --------------
+	bool Update();
+
+	// ------------------------------------------------
+	// CPU
+	std::string GetCPUName();
+	float UpdateCPU();
+	float GetCPUUsage() { return m_cpuUsage; }
+
+	// ------------------------------------------------
+	// MEMORY
+	float GetMemUsage();
+	float GetMemPeak();
+	float GetPMCInfo(int id);
+
+	// ------------------------------------------------
+	enum PMCInfo
+	{
+		PageFaultCount = 0,
+		PagefileUsage,
+		PeakPagefileUsage,
+		QuotaNonPagedPoolUsage,
+		QuotaPagedPoolUsage,
+		QuotaPeakNonPagedPoolUsage,
+		WorkingSetSize,
+		PeakWorkingSetSize,
+		PMCInfo_END
+	};
+};
+
+//////////////////////////

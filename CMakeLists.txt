@@ -558,6 +558,32 @@ add_library(Base OBJECT
 	Code/CryMP/Server/SafeWriting/APIImpl.cpp
 	Code/CryMP/Server/SafeWriting/SafeWriting.h
 	Code/CryMP/Server/SafeWriting/SafeWriting.cpp
+	Code/CryMP/Server/Shortcut0/SC_Server.cpp
+	Code/CryMP/Server/Shortcut0/SC_Server.h
+	Code/CryMP/Server/Shortcut0/SC_ServerCVars.cpp
+	Code/CryMP/Server/Shortcut0/SC_ServerCVars.h
+	Code/CryMP/Server/Shortcut0/SC_ServerEvents.cpp
+	Code/CryMP/Server/Shortcut0/SC_ServerEvents.h
+	Code/CryMP/Server/Shortcut0/SC_ServerLog.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_AntiCheat.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_FileSaver.cpp
+	Code/CryMP/Server/Shortcut0/Utils/SC_FileSaver.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_LuaFileSystem.cpp
+	Code/CryMP/Server/Shortcut0/Utils/SC_LuaFileSystem.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_QuitHook.cpp
+	Code/CryMP/Server/Shortcut0/Utils/SC_QuitHook.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_ServerAStar.cpp
+	Code/CryMP/Server/Shortcut0/Utils/SC_ServerAStar.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_ServerStats.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_ServerTimer.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_ServerUtils.h
+	Code/CryMP/Server/Shortcut0/Utils/SC_CVarCallbacks.h
+	Code/CryMP/Server/Shortcut0/Extensions/ScriptBind_SC_GunTurret.cpp
+	Code/CryMP/Server/Shortcut0/Extensions/ScriptBind_SC_GunTurret.h
+	Code/CryMP/Server/Shortcut0/Extensions/ScriptBind_SC_Server.cpp
+	Code/CryMP/Server/Shortcut0/Extensions/ScriptBind_SC_Server.h
+	Code/CryMP/Server/Shortcut0/Extensions/ScriptBind_SC_Vehicle.cpp
+	Code/CryMP/Server/Shortcut0/Extensions/ScriptBind_SC_Vehicle.h
 	Code/CryScriptSystem/LuaLibs/bitlib.c
 	Code/CryScriptSystem/ScriptBindings/ScriptBindings.cpp
 	Code/CryScriptSystem/ScriptBindings/ScriptBindings.h
@@ -697,7 +723,7 @@ add_library(Base OBJECT
 	ThirdParty/tracy/public/TracyClient.cpp
 	${PROJECT_BINARY_DIR}/config.h
 	${PROJECT_BINARY_DIR}/version.h
-)
+ )
 
 if(BUILD_BITS EQUAL 64)
 	target_compile_definitions(Base PUBLIC BUILD_64BIT)

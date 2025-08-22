@@ -222,6 +222,11 @@ public:
 	int ProcessEMPEffect(IFunctionHandler* pH, ScriptHandle targetId, float timeScale);
 	int PerformDeadHit(IFunctionHandler* pH);
 
+	// Shortcut0
+	int InitScriptTables(IFunctionHandler* pH);
+	//...
+
+
 private:
 	void RegisterGlobals();
 	void RegisterMethods();

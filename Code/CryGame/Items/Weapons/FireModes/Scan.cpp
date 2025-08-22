@@ -22,6 +22,10 @@ History:
 
 #include "CryCommon/CrySoundSystem/ISound.h"
 
+// Shortcut0
+#include "CryGame/GameCVars.h"
+#include "CryMP/Server/SSM.h"
+
 
 //------------------------------------------------------------------------
 CScan::CScan()
@@ -343,8 +347,28 @@ void CScan::NetShoot(const Vec3 &hit, int ph)
 				else*/ if(IItem *pItem = g_pGame->GetIGameFramework()->GetIItemSystem()->GetItem(pEntity->GetId()))
 					continue;
 
+				// Shortcut0
+				if (pActor && pActor->GetActorClass() == CPlayer::GetActorClassType())
+				{
+					if (CPlayer* pPlayer = static_cast<CPlayer*>(pActor); CNanoSuit * pSuit = pPlayer->GetNanoSuit())
+					{
+						if (pSuit && pSuit->GetMode() == NANOMODE_CLOAK)
+						{
+							if (!g_pGameCVars->server_AllowScanCloakedPlayers)
+							{
+								continue;
+							}
+						}
+					}
+				}
+
 				g_pGame->GetGameRules()->AddTaggedEntity(ownerId, pEntity->GetId(), true);
 			}
+		}
+
+		if (ISSM* pSSM = g_pGame->GetSSM())
+		{
+			pSSM->OnRadarScanComplete(ownerId, m_pWeapon ? m_pWeapon->GetEntityId() : 0, radius);
 		}
 	}
 }

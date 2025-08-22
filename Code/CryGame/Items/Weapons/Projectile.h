@@ -143,6 +143,11 @@ public:
 		return m_totalLifetime;
 	}
 
+	// shortcut0
+	virtual void SetOwnerId(EntityId newOwnerId) {m_ownerId = newOwnerId;}
+	float m_LaunchTime = 0.f;
+	bool m_HasExploded = false;
+
 protected:
 	CWeapon *GetWeapon();
 

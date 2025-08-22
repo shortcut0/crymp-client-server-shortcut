@@ -302,6 +302,9 @@ class CPlayer :
 
 public:
 
+	// Shortcut0
+	Vec3 m_NetLookDirection{ 0 };
+
 	enum EPlayerSounds //most of these sounds are supposed to be played, when the nanosuit is not in use
 	{
 		ESound_Player_First,
@@ -705,7 +708,7 @@ public:
 	void RemoveAllExplosives(float timeDelay, uint8 typeId = 0xff);
 	void RemoveExplosiveEntity(EntityId entityId);
 	void RecordExplosivePlaced(EntityId entityId, uint8 typeId);
-	void RecordExplosiveDestroyed(EntityId entityId, uint8 typeId);
+	void RecordExplosiveDestroyed(EntityId entityId, uint8 typeId, bool HasExploded);
 
 	//First person fists/hands actions
 	void EnterFirstPersonSwimming();

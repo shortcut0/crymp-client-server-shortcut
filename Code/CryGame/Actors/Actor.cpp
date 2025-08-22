@@ -2062,6 +2062,18 @@ void CActor::SetMaxHealth(int maxHealth)
 
 void CActor::Kill()
 {
+
+	// Shortcut0
+	if (m_SvGodMode > 0)
+	{
+		return;
+	}
+	else
+	{
+		m_SvDeathTime = gEnv->pTimer->GetCurrTime();
+	}
+	
+
 	if (m_pAnimatedCharacter)
 		m_pAnimatedCharacter->SetParams(m_pAnimatedCharacter->GetParams().ModifyFlags(0, eACF_EnableMovementProcessing));
 
@@ -3540,8 +3552,18 @@ IMPLEMENT_RMI(CActor, SvRequestDropItem)
 		return false;
 	}
 
-	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsRMILegitimate(pNetChannel, pItem->GetOwnerId())) {
-		return true;
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM) 
+	{
+		if (!pSSM->IsRMILegitimate(pNetChannel, pItem->GetOwnerId()))
+		{
+			return true;
+		}
+		
+		// Shortcut0
+		if (!pSSM->OnActorDropItem(GetEntityId(), params.itemId))
+		{
+			return true;
+		}
 	}
 
 	//CryLogAlways("%s::SvRequestDropItem(%s)", GetEntity()->GetName(), pItem->GetEntity()->GetName());
@@ -3555,6 +3577,17 @@ IMPLEMENT_RMI(CActor, SvRequestDropItem)
 IMPLEMENT_RMI(CActor, SvRequestPickUpItem)
 {
 	CItem* pItem = GetItem(params.itemId);
+
+	// Shortcut0
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		if (!pSSM->CanActorPickUpItem(GetEntityId(), params.itemId, pItem ? true : false))
+		{
+			GetGameObject()->InvokeRMIWithDependentObject(CActor::ClDrop(), CActor::DropItemParams(params.itemId, 1, true, false), eRMI_ToAllClients | eRMI_NoLocalCalls, params.itemId);
+			return true;
+		}
+	}
+
 	if (!pItem)
 	{
 		//CryMP: Add support for pick up items in Multiplayer
@@ -3566,9 +3599,20 @@ IMPLEMENT_RMI(CActor, SvRequestPickUpItem)
 			{
 				if (IGameObject* pGameObject = m_pGameFramework->GetGameObject(params.itemId))
 				{
+
+					// Shortcut0
+					IEntity* pHeldObject = gEnv->pEntitySystem->GetEntity(params.itemId);
+					if (pHeldObject)
+					{
+						if (IScriptTable* pHeldObjectLua = pHeldObject->GetScriptTable())
+						{
+							pHeldObjectLua->SetValue("GrabOwnerID", ScriptHandle(GetEntityId()));
+						}
+					}
+					// ...
+
 					m_pGameFramework->GetNetContext()->DelegateAuthority(params.itemId, pNetChannel);
 					SetHeldObjectId(params.itemId);
-
 					GetGameObject()->InvokeRMIWithDependentObject(CActor::ClPickUp(), CActor::PickItemParams(params.itemId, false, false), eRMI_ToAllClients | eRMI_NoLocalCalls, params.itemId);
 				}
 			}
@@ -3733,6 +3777,12 @@ void CActor::NetReviveInVehicle(EntityId vehicleId, int seatId, int teamId)
 //------------------------------------------------------------------------
 void CActor::NetKill(EntityId shooterId, uint16 weaponClassId, int damage, int material, int hit_type)
 {
+
+	if (m_SvGodMode > 0)
+	{
+		return;
+	}
+
 	static char weaponClassName[129] = { 0 };
 	m_pGameFramework->GetNetworkSafeClassName(weaponClassName, 128, weaponClassId);
 

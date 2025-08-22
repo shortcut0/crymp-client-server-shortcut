@@ -82,6 +82,11 @@ void CScriptBind_GameRules::RegisterMethods()
 #undef SCRIPT_REG_CLASSNAME
 #define SCRIPT_REG_CLASSNAME &CScriptBind_GameRules::
 
+	// Shortcut0
+	// Re-Initializes the Game Rules Script tables to reflect changes from the script
+	SCRIPT_REG_FUNC(InitScriptTables);
+	// ...
+
 	SCRIPT_REG_TEMPLFUNC(IsServer, "");
 	SCRIPT_REG_TEMPLFUNC(IsClient, "");
 	SCRIPT_REG_TEMPLFUNC(CanCheat, "");
@@ -1585,6 +1590,8 @@ int CScriptBind_GameRules::SendChatMessage(IFunctionHandler* pH, int type, Scrip
 	if (!pGameRules)
 		return pH->EndFunction();
 
+	// Shortcut0: Identifier for fake messages
+	pGameRules->m_SvChatIsFake = true;
 	pGameRules->SendChatMessage((EChatMessageType)type, (EntityId)sourceId.n, (EntityId)targetId.n, msg);
 
 	return pH->EndFunction();
@@ -2457,4 +2464,17 @@ int CScriptBind_GameRules::ProcessEMPEffect(IFunctionHandler* pH, ScriptHandle t
 int CScriptBind_GameRules::PerformDeadHit(IFunctionHandler* pH)
 {
 	return pH->EndFunction(true);
+}
+
+
+//------------------------------------------------------------------------
+// SHORTCUT0
+int CScriptBind_GameRules::InitScriptTables(IFunctionHandler* pH)
+{
+	CGameRules* pGameRules = GetGameRules(pH);
+	if (!pGameRules)
+		return pH->EndFunction();
+
+	pGameRules->InitScriptTables();
+	return pH->EndFunction();
 }

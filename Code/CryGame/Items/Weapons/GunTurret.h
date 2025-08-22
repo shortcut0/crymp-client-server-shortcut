@@ -23,7 +23,9 @@ History:
 #include "Weapon.h"
 #include "FireModes/Single.h"
 
-
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+#include "CryMP/Server/Shortcut0/Utils/SC_ServerTimer.h"
 
 class CGunTurret : public CWeapon, public IWeaponFiringLocator
 {
@@ -304,6 +306,28 @@ public:
   virtual void WeaponReleased() {}
 // IWeaponFiringLocator
 
+  // =============================================================================
+  // Shortcut0
+
+  void SC_UpdateAimGoal(Vec3 Pos, float dT);
+  void SC_ResetProperties();
+
+  Vec3 m_SC_AimPosition{ ZERO };
+  EntityId m_SC_AimTargetId;  // we LOOK at this
+  EntityId m_SC_FireTargetId; // we FIRE at this
+
+  float m_SC_PitchGoal = 999.f;
+  float m_SC_YawGoal = 999.f;
+  float m_SC_WantFireTime = -1.f; // just FIRE
+  float m_SC_WantAimTime = -1.f; // just AIM
+  float m_SC_WantTargetTime = -1.f; // just FIRE at TARGET
+
+  bool m_SC_WantFire = false;
+  bool m_SC_WantFireSec = false;
+
+  SC_ServerTimer m_SC_TickTimer{ 1.f };
+  SC_ServerTimer m_SC_FrameTimer{ 0.1f };
+  // =============================================================================
 protected:
 	virtual bool ReadItemParams(const IItemParamsNode *params);
 

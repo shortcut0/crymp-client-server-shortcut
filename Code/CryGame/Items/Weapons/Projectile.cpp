@@ -29,6 +29,9 @@ History:
 
 #include "CryGame/HUD/HUD.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+
 //------------------------------------------------------------------------
 CProjectile::CProjectile()
 {
@@ -534,6 +537,12 @@ void CProjectile::SetVelocity(const Vec3& pos, const Vec3& dir, const Vec3& velo
 
 	Vec3 totalVelocity = (dir * m_pAmmoParams->speed * speedScale) + velocity;
 
+	// Shortcut0
+	if (CWeapon* pWeapon = GetWeapon())
+	{
+		totalVelocity *= pWeapon->m_ProjectileVelocitySpeedScale;
+	}
+
 	if (m_pPhysicalEntity->GetType() == PE_PARTICLE)
 	{
 		pe_params_particle particle;
@@ -596,6 +605,10 @@ void CProjectile::SetParams(EntityId ownerId, EntityId hostId, EntityId weaponId
 //------------------------------------------------------------------------
 void CProjectile::Launch(const Vec3& pos, const Vec3& dir, const Vec3& velocity, float speedScale)
 {
+
+	// Shortcut0
+	m_LaunchTime = gEnv->pTimer->GetCurrTime();
+
 	m_destroying = false;
 
 	GetGameObject()->EnablePhysicsEvent(true, eEPE_OnCollisionLogged);
@@ -839,6 +852,9 @@ void CProjectile::Explode(bool destroy, bool impact, const Vec3& pos, const Vec3
 
 	if (destroy)
 		Destroy();
+
+	// Shortcut0
+	m_HasExploded = true;
 }
 
 void CProjectile::UpdateWhiz()
@@ -1325,18 +1341,47 @@ float CProjectile::GetSpeed() const
 //==================================================================
 void CProjectile::OnHit(const HitInfo& hit) //server only
 {
+
+	// Shortcut0
+	IEntityClass* pThisClass = GetEntity()->GetClass();
+	const static IEntityClass* pClayClass = gEnv->pEntitySystem->GetClassRegistry()->FindClass("claymoreexplosive");
+	const static IEntityClass* pC4Class = gEnv->pEntitySystem->GetClassRegistry()->FindClass("c4explosive");
+	const static IEntityClass* pAVClass = gEnv->pEntitySystem->GetClassRegistry()->FindClass("avexplosive");
+
+
 	//C4, special case
 	if (m_noBulletHits)
-		return;
+	{
+		// Shortcut0: Modified, so that C4 can be shot at and blown up
+		bool isC4 = (pThisClass == pC4Class);
+		if (!isC4 || !g_pGameCVars->server_C4_MakeHitable)
+		{
+			return;
+		}
+	}
 
-	//Reduce hit points if hit, and explode (only for C4, AVMine and ClayMore)
+	// Shortcut0
+	bool destroyed, damaged = false;
 	if (hit.targetId == GetEntityId() && m_hitPoints > 0 && !m_destroying)
 	{
 		m_hitPoints -= (int)hit.damage;
-
-		if (m_hitPoints <= 0)
-			Explode(true);
+		damaged = true;
 	}
+
+	// Serer - check if hit is OK
+	bool hitOk = true;
+	if (hit.targetId == GetEntityId() && hit.shooterId && (pThisClass == pClayClass || pThisClass == pC4Class || pThisClass == pAVClass))
+	{
+		if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->CheckProjectileHit(hit.shooterId, GetEntityId(), destroyed, hit.damage, hit.weaponId, hit.pos, hit.normal) && damaged)
+		{
+			m_hitPoints += (int)hit.damage; // simply reverse the hit, but only if any damage was applied
+		}
+	}
+
+	//Reduce hit points if hit, and explode (only for C4, AVMine and ClayMore)
+	destroyed = m_hitPoints <= 0;
+	if (destroyed)
+		Explode(true);
 }
 //==================================================================
 void CProjectile::OnExplosion(const ExplosionInfo& explosion)

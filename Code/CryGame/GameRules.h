@@ -202,6 +202,7 @@ public:
 
 	virtual void SendTextMessage(ETextMessageType type, const char *msg, unsigned int to=eRMI_ToAllClients, int channelId=-1,
 		const char *p0=0, const char *p1=0, const char *p2=0, const char *p3=0);
+	
 	virtual void SendChatMessage(EChatMessageType type, EntityId sourceId, EntityId targetId, const char *msg);
 	virtual bool CanReceiveChatMessage(EChatMessageType type, EntityId sourceId, EntityId targetId) const;
 
@@ -262,6 +263,14 @@ public:
 	bool IsNeutral(EntityId entityId) const { return GetTeam(entityId) == 0; };
 	bool IsHostile(EntityId firstId, EntityId secondId) const { return (!IsSameTeam(firstId, secondId) || GetTeamCount() < 2); };
 	void OnSetActorModel(CActor* pActor, int teamId);
+
+	//------------------------------------------------------------------------
+	// Shortcut0
+	void InitScriptTables();
+
+	// So we can differentiate between actualy client messages and faked ones
+	bool m_SvChatIsFake = false;
+	int m_SvChatTeamId = -1;
 
 	//------------------------------------------------------------------------
 	// player
@@ -936,7 +945,12 @@ public:
 	DECLARE_CLIENT_RMI_NOATTACH_FAST(ClShatterEntity, ShatterEntityParams, eNRT_ReliableOrdered);
 
 	DECLARE_SERVER_RMI_NOATTACH(SvRequestChatMessage, ChatMessageParams, eNRT_ReliableUnordered);
-	DECLARE_CLIENT_RMI_NOATTACH(ClChatMessage, ChatMessageParams, eNRT_ReliableUnordered);
+	
+	// Shortcut0: On Servers we want eNRT_ReliableOrdered for text messages
+	DECLARE_CLIENT_RMI_NOATTACH(ClTextMessage, TextMessageParams, eNRT_ReliableOrdered);
+	DECLARE_CLIENT_RMI_NOATTACH(ClChatMessage, ChatMessageParams, eNRT_ReliableOrdered);
+	//DECLARE_CLIENT_RMI_NOATTACH(ClChatMessage, ChatMessageParams, eNRT_ReliableUnordered); // Original
+	//DECLARE_CLIENT_RMI_NOATTACH(ClTextMessage, TextMessageParams, eNRT_ReliableUnordered); // Original
 
 	DECLARE_SERVER_RMI_NOATTACH(SvRequestRadioMessage, RadioMessageParams, eNRT_ReliableUnordered);
 	DECLARE_CLIENT_RMI_NOATTACH(ClRadioMessage, RadioMessageParams, eNRT_ReliableUnordered);
@@ -951,8 +965,7 @@ public:
 	DECLARE_SERVER_RMI_NOATTACH(SvRequestChangeTeam, ChangeTeamParams, eNRT_ReliableOrdered);
 	DECLARE_SERVER_RMI_NOATTACH(SvRequestSpectatorMode, SpectatorModeParams, eNRT_ReliableOrdered);
 	DECLARE_CLIENT_RMI_NOATTACH(ClSetTeam, SetTeamParams, eNRT_ReliableOrdered);
-	DECLARE_CLIENT_RMI_NOATTACH(ClTextMessage, TextMessageParams, eNRT_ReliableUnordered);
-
+	
 	DECLARE_CLIENT_RMI_NOATTACH(ClAddSpawnGroup, SpawnGroupParams, eNRT_ReliableOrdered);
 	DECLARE_CLIENT_RMI_NOATTACH(ClRemoveSpawnGroup, SpawnGroupParams, eNRT_ReliableOrdered);
 

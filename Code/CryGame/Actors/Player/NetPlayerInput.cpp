@@ -93,6 +93,11 @@ void CNetPlayerInput::Update()
 
 		m_pPlayer->GetGameObject()->ChangedNetworkState(INPUT_ASPECT);
 	}
+
+	if (m_pPlayer)
+	{
+		m_pPlayer->m_NetLookDirection = m_curInput.lookDirection;
+	}
 }
 
 void CNetPlayerInput::PostUpdate()

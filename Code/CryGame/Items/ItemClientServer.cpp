@@ -15,6 +15,9 @@ History:
 #include "ItemSharedParams.h"
 #include "CryGame/Actors/Actor.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+
 
 //------------------------------------------------------------------------
 EntityId CItem::NetGetOwnerId() const
@@ -86,6 +89,16 @@ IMPLEMENT_RMI(CItem, SvRequestAttachAccessory)
 	{
 		if (pInventory->GetCountOfClass(params.accessory.c_str()) > 0)
 		{
+
+			// Shortcut0			
+			if (ISSM* pSSM = g_pGame->GetSSM())
+			{
+				if (!pSSM->CanAttachAccessory(GetOwner() ? GetOwner()->GetScriptTable() : NULL, GetEntity()->GetScriptTable(), params.accessory.c_str()))
+				{
+					return false;
+				}
+			}
+
 			DoSwitchAccessory(ItemString(params.accessory.c_str()));
 			GetGameObject()->InvokeRMI(ClAttachAccessory(), params, eRMI_ToAllClients | eRMI_NoLocalCalls);
 
@@ -107,16 +120,28 @@ IMPLEMENT_RMI(CItem, ClAttachAccessory)
 //------------------------------------------------------------------------
 IMPLEMENT_RMI(CItem, SvRequestEnterModify)
 {
-	GetGameObject()->InvokeRMI(ClEnterModify(), params, eRMI_ToOtherClients, m_pGameFramework->GetGameChannelId(pNetChannel));
 
+	// Shortcut0			
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnEnterWeaponModify(GetOwner() ? GetOwner()->GetScriptTable() : NULL, GetEntity()->GetScriptTable());
+	}
+
+	GetGameObject()->InvokeRMI(ClEnterModify(), params, eRMI_ToOtherClients, m_pGameFramework->GetGameChannelId(pNetChannel));
 	return true;
 }
 
 //------------------------------------------------------------------------
 IMPLEMENT_RMI(CItem, SvRequestLeaveModify)
 {
-	GetGameObject()->InvokeRMI(ClLeaveModify(), params, eRMI_ToOtherClients, m_pGameFramework->GetGameChannelId(pNetChannel));
 
+	// Shortcut0			
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnLeaveWeaponModify(GetOwner() ? GetOwner()->GetScriptTable() : NULL, GetEntity()->GetScriptTable());
+	}
+
+	GetGameObject()->InvokeRMI(ClLeaveModify(), params, eRMI_ToOtherClients, m_pGameFramework->GetGameChannelId(pNetChannel));
 	return true;
 }
 

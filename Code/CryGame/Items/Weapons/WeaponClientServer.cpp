@@ -17,6 +17,9 @@
 #include "CryGame/Game.h"
 #include "CryGame/GameRules.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+
 /*
 #define CHECK_OWNER_REQUEST()	\
 	{ \
@@ -520,6 +523,11 @@ IMPLEMENT_RMI(CWeapon, SvRequestShoot)
 			if (CGameRules *pGameRules=g_pGame->GetGameRules())
 				pGameRules->ValidateShot(pActor->GetEntityId(), GetEntityId(), params.seq, params.seqr);
 		}
+
+		if (ISSM* pSSM = g_pGame->GetSSM())
+		{
+			pSSM->OnWeaponStartFire(pActor ? pActor->GetEntity()->GetScriptTable() : 0, GetEntity()->GetScriptTable(), m_LastFiredAmmoId ? m_LastFiredAmmoId : 0, m_LastFiredAmmoClass ? m_LastFiredAmmoClass : "null", params.pos, params.hit, params.dir);
+		}
 	}
 
 	return true;
@@ -556,6 +564,11 @@ IMPLEMENT_RMI(CWeapon, SvRequestShootEx)
 		{
 			if (CGameRules *pGameRules=g_pGame->GetGameRules())
 				pGameRules->ValidateShot(pActor->GetEntityId(), GetEntityId(), params.seq, params.seqr);
+		}
+
+		if (ISSM* pSSM = g_pGame->GetSSM())
+		{
+			pSSM->OnWeaponStartFire(pActor ? pActor->GetEntity()->GetScriptTable() : 0, GetEntity()->GetScriptTable(), m_LastFiredAmmoId ? m_LastFiredAmmoId : 0, m_LastFiredAmmoClass ? m_LastFiredAmmoClass : "null", params.pos, params.hit, params.dir);
 		}
 	}
 
@@ -835,6 +848,11 @@ IMPLEMENT_RMI(CWeapon, SvRequestWeaponRaised)
 {
 	CHECK_OWNER_REQUEST();
 
+	// Shortcut0
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnWallJump(GetOwnerId(), GetEntityId()); // Not actually a walljump, only if thisClass is fists
+	}
 	GetGameObject()->InvokeRMI(CWeapon::ClWeaponRaised(), params, eRMI_ToAllClients);
 
 	return true;

@@ -29,6 +29,8 @@ History:
 #include "Projectile.h"
 #include "CryGame/Actors/Player/Player.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
 
 namespace
 {
@@ -131,6 +133,13 @@ void CGunTurret::PostInit(IGameObject* pGameObject)
 	if (!gEnv->bServer)
 		for (int i = 0; i < 4;i++)
 			pGameObject->SetUpdateSlotEnableCondition(this, i, eUEC_InRange);
+
+
+	// Shortcut0
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnGunTurretInit(gEnv->pEntitySystem->GetEntity(GetEntityId()));
+	}
 }
 
 //------------------------------------------------------------------------
@@ -588,6 +597,16 @@ bool CGunTurret::IsTargetDead(IActor* pTarget) const
 //------------------------------------------------------------------------
 bool CGunTurret::IsTargetHostile(IActor* pTarget) const
 {
+
+	// Shortcut0
+	if (CActor* pActor = GetActor(pTarget->GetEntityId()))
+	{
+		if (pActor->m_SvGodMode >= 1)
+		{
+			return false;
+		}
+	}
+
 	int species = 0;
 	bool sameSpecies = (GetEntityProperty(pTarget->GetEntity(), "species", species) && species == m_turretparams.species);
 	int team = g_pGame->GetGameRules()->GetTeam(pTarget->GetEntityId());
@@ -1319,6 +1338,17 @@ void CGunTurret::UpdateSearchingGoal(float deltaTime)
 			m_searchHint ^= 1;
 	}
 
+	// Shortcut0
+	if (m_SC_YawGoal != 999.f)
+	{
+		m_goalYaw = m_SC_YawGoal;
+	}
+	if (m_SC_PitchGoal != 999.f)
+	{
+		m_goalPitch = m_SC_PitchGoal;
+	}
+
+
 	GetGameObject()->ChangedNetworkState(ASPECT_GOALORIENTATION);
 }
 
@@ -1521,10 +1551,37 @@ bool CGunTurret::UpdateBurst(float deltaTime)
 //------------------------------------------------------------------------
 void CGunTurret::ServerUpdate(SEntityUpdateContext& ctx, int update)
 {
-	//update parameters. SNH: cache these in MP since they never change.
-	if (!gEnv->bMultiplayer)
+
+	// Shortcut0
+	if (g_pGameCVars->server_EnableTurretIdleState)
 	{
-		UpdateEntityProperties();
+
+		if (m_targetId == 0 && !m_SC_FrameTimer.Expired_Refresh())
+		{
+			return;
+		}
+
+		// Server. This is only updated every second to preserve CPU
+		if (m_SC_TickTimer.Expired_Refresh())
+		{
+			bool bForceUpdate = false;
+			if (IEntity* pThis = GetEntity())
+			{
+				if (IScriptTable* pScript = pThis->GetScriptTable())
+				{
+					SmartScriptTable pProperties(gEnv->pScriptSystem);
+					if (pScript->GetValue("Properties", pProperties))
+					{
+						pScript->GetValue("SvUpdateAlways", bForceUpdate);
+					}
+				}
+			}
+			//update parameters. SNH: cache these in MP since they never change.
+			if (bForceUpdate || !gEnv->bMultiplayer)
+			{
+				UpdateEntityProperties();
+			}
+		}
 	}
 
 	bool currentShootable = true;
@@ -1601,7 +1658,6 @@ void CGunTurret::ServerUpdate(SEntityUpdateContext& ctx, int update)
 
 			// a bit less tolerant for rockets
 			aim = aim && IsAiming(tpos, m_turretparams.aim_tolerance * 0.5f);
-
 			rocket = aim && !m_turretparams.search_only && m_fm2 && t_class == eTC_Vehicle && IsTargetRocketable(tpos);
 
 			if (g_pGameCVars->i_debug_turrets)
@@ -1644,6 +1700,55 @@ void CGunTurret::ServerUpdate(SEntityUpdateContext& ctx, int update)
 			m_randoms[eRV_UpdateTarget].New();
 		}
 
+		// =============================================================
+		// Shortcut0
+		bool AimGoalUpdated = false;
+		if (!pCurrentTarget)
+		{
+			if (m_SC_FireTargetId != NULL)
+			{
+				if (IEntity* pTarget = gEnv->pEntitySystem->GetEntity(m_SC_FireTargetId))
+				{
+					bool ServerMGOk = (m_SC_WantTargetTime - gEnv->pTimer->GetCurrTime()) > 0.f;
+					bool ServerRocketOk = (m_SC_WantTargetTime - gEnv->pTimer->GetCurrTime()) > 3.f; // Meaning rockets will start firing 1.5s later
+
+					mg |= ServerMGOk;
+					rocket |= ServerRocketOk;
+					
+					if (!ServerRocketOk)
+					{
+						m_SC_FireTargetId = NULL; // reset ??? why?
+					}
+					else
+					{
+						pCurrentTarget = pTarget;
+					}
+				}
+			}
+
+			// =============================================
+			if (m_SC_AimTargetId != NULL)
+			{
+				if (IEntity* pTarget = gEnv->pEntitySystem->GetEntity(m_SC_AimTargetId))
+				{
+					if (m_SC_WantAimTime - gEnv->pTimer->GetCurrTime() > 0.f)
+					{
+						UpdateGoal(pTarget, ctx.fFrameTime);
+					}
+					else
+					{
+						m_SC_AimTargetId = NULL; // reset
+					}
+				}
+			}
+			else if (m_SC_AimPosition.GetLength() > 0 && m_SC_WantAimTime - gEnv->pTimer->GetCurrTime() > 0.f)
+			{
+				SC_UpdateAimGoal(m_SC_AimPosition, ctx.fFrameTime);
+				AimGoalUpdated = true;
+			}
+		}
+		// =============================================================
+
 		if (pCurrentTarget)
 		{
 			if (m_turretparams.surveillance || IsTargetShootable(pCurrentTarget))
@@ -1651,12 +1756,24 @@ void CGunTurret::ServerUpdate(SEntityUpdateContext& ctx, int update)
 		}
 		else
 		{
-			if (m_turretparams.searching)
+			if (m_turretparams.searching /*shortcut0 ==>*/ && !AimGoalUpdated) // <== shortcut0
 			{
 				UpdateSearchingGoal(ctx.fFrameTime);
 			}
 		}
 	}
+
+	
+	bool SCFireTimeOk = m_SC_WantFireTime == -1 || gEnv->pTimer->GetCurrTime() < m_SC_WantFireTime;
+	if (!SCFireTimeOk)
+	{
+		m_SC_WantFire = false;
+		m_SC_WantFireSec = false;
+		m_SC_WantFireTime = -1.f;
+	}
+
+	mg |= m_SC_WantFire && SCFireTimeOk;
+	rocket |= m_SC_WantFireSec && SCFireTimeOk;
 
 	if (m_fm && mg != IsFiring(false))
 	{
@@ -1838,4 +1955,31 @@ void    CGunTurret::DrawDebug()
 	pDebug->AddSphere(rocket, 0.2f, ColorF(0, 1, 0, 1), 1.f);
 	pDebug->AddSphere(radar, 0.2f, ColorF(0, 0, 1, 1), 1.f);
 	pDebug->AddSphere(barrel, 0.2f, ColorF(1, 0, 1, 1), 1.f);
+}
+
+// ===========================================================
+// Shortcut0
+void CGunTurret::SC_UpdateAimGoal(Vec3 Pos, float dT)
+{
+	float goalYaw(0.f), goalPitch(0.f);
+	if (!GetTargetAngles(Pos, goalYaw, goalPitch))
+		return;
+
+	m_goalPitch = goalPitch;
+	m_goalYaw = goalYaw;
+
+	GetGameObject()->ChangedNetworkState(ASPECT_GOALORIENTATION);
+}
+
+// ===========================================================
+void CGunTurret::SC_ResetProperties()
+{
+	if (IScriptTable* pScriptTable = GetEntity()->GetScriptTable())
+	{
+		SmartScriptTable props;
+		if (pScriptTable->GetValue("Properties", props))
+			ReadProperties(props);
+	}
+
+	UpdateEntityProperties();
 }

@@ -39,7 +39,7 @@ CC4Projectile::~CC4Projectile()
 		IActor* pOwner = g_pGame->GetIGameFramework()->GetIActorSystem()->GetActor(m_ownerId);
 		if (pOwner && pOwner->IsPlayer())
 		{
-			((CPlayer*)pOwner)->RecordExplosiveDestroyed(GetEntityId(), 2);
+			((CPlayer*)pOwner)->RecordExplosiveDestroyed(GetEntityId(), 2, m_HasExploded);
 		}
 	}
 }
@@ -184,7 +184,7 @@ void CC4Projectile::Stick(EventPhysCollision* pCollision)
 			CActor* pActor = static_cast<CActor*>(gEnv->pGame->GetIGameFramework()->GetIActorSystem()->GetActor(pTargetEntity->GetId()));
 
 			//Not in MP
-			if (pActor && gEnv->bMultiplayer)
+			if (pActor && gEnv->bMultiplayer && !g_pGameCVars->server_c4_SticksToPlayers)
 			{
 				m_notStick = true;
 				return;
@@ -192,12 +192,13 @@ void CC4Projectile::Stick(EventPhysCollision* pCollision)
 
 			if (pActor && pActor->GetHealth() > 0)
 			{
-				if (pActor->GetActorSpecies() != eGCT_HUMAN)
+				if (pActor->GetActorSpecies() != eGCT_HUMAN && !g_pGameCVars->server_c4_SticksToAllSpecies)
 				{
 					m_notStick = true;
 					return;
 				}
 
+				// SC Fixme (Replace with stick to entity!)
 				if (StickToCharacter(true, pTargetEntity))
 				{
 					GetGameObject()->SetAspectProfile(eEA_Physics, ePT_None);

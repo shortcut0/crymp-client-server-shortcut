@@ -71,6 +71,9 @@ History:
 #include "CryGame/Items/Weapons/Binocular.h"
 #include "CryGame/SoundMoods.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+
 // enable this to check nan's on position updates... useful for debugging some weird crashes
 #define ENABLE_NAN_CHECK
 
@@ -749,16 +752,21 @@ void CPlayer::Update(SEntityUpdateContext& ctx, int updateSlot)
 
 	if (gEnv->bServer && !IsClient() && IsPlayer())
 	{
-		if (INetChannel* pNetChannel = m_pGameFramework->GetNetChannel(GetChannelId()))
+		// Shortcut0
+		if (!g_pGameCVars->server_DisablePlayerMovementResetting)
 		{
-			if (pNetChannel->GetContextViewState() >= eCVS_InGame)
+			if (INetChannel* pNetChannel = m_pGameFramework->GetNetChannel(GetChannelId()))
 			{
-				if (pNetChannel->IsSufferingHighLatency(gEnv->pTimer->GetAsyncTime()))
-					SufferingHighLatency(true);
-				else
-					SufferingHighLatency(false);
+				if (pNetChannel->GetContextViewState() >= eCVS_InGame)
+				{
+					if (pNetChannel->IsSufferingHighLatency(gEnv->pTimer->GetAsyncTime()))
+						SufferingHighLatency(true);
+					else
+						SufferingHighLatency(false);
+				}
 			}
 		}
+
 	}
 
 	if (IPhysicalEntity* pPE = pEnt->GetPhysics())
@@ -6925,13 +6933,21 @@ void CPlayer::RecordExplosivePlaced(EntityId entityId, uint8 typeId)
 	int limit = 0;
 	bool debug = (g_pGameCVars->g_debugMines != 0);
 
-	if (typeId == 0)
+	if (typeId == 0) // Clay
 		limit = g_pGameCVars->g_claymore_limit;
-	else if (typeId == 1)
+	else if (typeId == 1) // AV
 		limit = g_pGameCVars->g_avmine_limit;
+	else if (typeId == 2) // C4
+	{
+		limit = g_pGameCVars->server_C4_Limit;
+	}
+
+	if (CActor* pActor = GetActor(GetEntityId()); pActor->m_SvGodMode > 0)
+	{
+		limit = 10000;
+	}
 
 	std::list<EntityId>& explosives = m_explosiveList[typeId];
-
 	if (limit && explosives.size() >= limit)
 	{
 		// remove the oldest mine.
@@ -6947,13 +6963,13 @@ void CPlayer::RecordExplosivePlaced(EntityId entityId, uint8 typeId)
 		CryLog("%s: Explosive(%d) placed: %d, now %d", GetEntity()->GetName(), typeId, entityId, explosives.size());
 }
 
-void CPlayer::RecordExplosiveDestroyed(EntityId entityId, uint8 typeId)
+void CPlayer::RecordExplosiveDestroyed(EntityId entityId, uint8 typeId, bool HasExploded)
 {
 	bool debug = (g_pGameCVars->g_debugMines != 0);
 
 	std::list<EntityId>& explosives = m_explosiveList[typeId];
-
 	std::list<EntityId>::iterator it = std::find(explosives.begin(), explosives.end(), entityId);
+
 	if (it != explosives.end())
 	{
 		explosives.erase(it);
@@ -6964,6 +6980,12 @@ void CPlayer::RecordExplosiveDestroyed(EntityId entityId, uint8 typeId)
 	{
 		if (debug)
 			CryLog("%s: Explosive(%d) destroyed but not in list: %d", GetEntity()->GetName(), typeId, entityId);
+	}
+
+	// Shortcut0
+	if (ISSM* pSSM = g_pGame->GetSSM(); IEntity * pEntity = g_pGame->GetIGameFramework()->GetISystem()->GetIEntitySystem()->GetEntity(entityId))
+	{
+		pSSM->OnPlayerExplosiveDestroyed(GetEntityId(), pEntity->GetId(), int(typeId), (int)explosives.size(), HasExploded);
 	}
 }
 

@@ -972,3 +972,122 @@ std::string WinAPI::GetIP(const std::string& hostName) {
 		return inet_ntoa(iaddr);
 	}
 }
+
+
+
+
+//////////////////
+// Server Tools //
+// TODO: MOVE
+// TO SERVER FOLDER
+//////////////////
+
+#include <Psapi.h>
+
+struct CPUUsageTimes {
+	FILETIME idleTime;
+	FILETIME kernelTime;
+	FILETIME userTime;
+};
+
+CPUUsageTimes Server_m_preTimes;
+CPUUsageTimes Server_m_postTimes;
+
+void GetCPUUsageTimes(CPUUsageTimes& times) {
+	GetSystemTimes(&times.idleTime, &times.kernelTime, &times.userTime);
+}
+
+float SC_ServerStats::UpdateCPU() {
+
+	GetCPUUsageTimes(Server_m_postTimes);
+
+	ULONGLONG idleDiff = (reinterpret_cast<ULONGLONG&>(Server_m_postTimes.idleTime) - reinterpret_cast<ULONGLONG&>(Server_m_preTimes.idleTime));
+	ULONGLONG kernelDiff = (reinterpret_cast<ULONGLONG&>(Server_m_postTimes.kernelTime) - reinterpret_cast<ULONGLONG&>(Server_m_preTimes.kernelTime));
+	ULONGLONG userDiff = (reinterpret_cast<ULONGLONG&>(Server_m_postTimes.userTime) - reinterpret_cast<ULONGLONG&>(Server_m_preTimes.userTime));
+
+	ULONGLONG totalSystem = kernelDiff + userDiff;
+	ULONGLONG totalTime = totalSystem - idleDiff;
+
+	// Update previous times
+	Server_m_preTimes = Server_m_postTimes;
+
+	if (totalSystem == 0) {
+		return 0.0f;
+	}
+
+	return (static_cast<float>(totalTime) / totalSystem) * 100.0f;
+}
+
+bool SC_ServerStats::Update() {
+	m_cpuUsage = UpdateCPU();
+	return false;
+}
+
+std::string SC_ServerStats::GetCPUName() {
+
+	if (!m_cpuName.empty())
+		return m_cpuName;
+	HKEY hKey;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+		"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+		0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+		return "<Unknown>";
+	}
+	char cpuName[256];
+	DWORD size = sizeof(cpuName);
+	if (RegQueryValueEx(hKey, "ProcessorNameString", nullptr, nullptr,
+		(LPBYTE)cpuName, &size) != ERROR_SUCCESS) {
+		RegCloseKey(hKey);
+		return "<Unknown>";
+	}
+	RegCloseKey(hKey);
+	m_cpuName = cpuName;
+	return std::string(cpuName);
+}
+
+float SC_ServerStats::GetMemUsage() {
+	return GetPMCInfo(WorkingSetSize);
+}
+
+float SC_ServerStats::GetMemPeak() {
+	return GetPMCInfo(PeakWorkingSetSize);
+}
+
+float SC_ServerStats::GetPMCInfo(int id) {
+	float pmcValue = 0.f;
+	PROCESS_MEMORY_COUNTERS pmc;
+
+	if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+		switch ((PMCInfo)id) {
+		case PageFaultCount:
+			pmcValue = static_cast<float>(pmc.PageFaultCount);
+			break;
+		case PagefileUsage:
+			pmcValue = static_cast<float>(pmc.PagefileUsage);
+			break;
+		case PeakPagefileUsage:
+			pmcValue = static_cast<float>(pmc.PeakPagefileUsage);
+			break;
+		case QuotaNonPagedPoolUsage:
+			pmcValue = static_cast<float>(pmc.QuotaNonPagedPoolUsage);
+			break;
+		case QuotaPagedPoolUsage:
+			pmcValue = static_cast<float>(pmc.QuotaPagedPoolUsage);
+			break;
+		case QuotaPeakNonPagedPoolUsage:
+			pmcValue = static_cast<float>(pmc.QuotaPeakNonPagedPoolUsage);
+			break;
+		case WorkingSetSize:
+			pmcValue = static_cast<float>(pmc.WorkingSetSize);
+			break;
+		case PeakWorkingSetSize:
+			pmcValue = static_cast<float>(pmc.PeakWorkingSetSize);
+			break;
+		default:
+			pmcValue = 0.f;
+			break;
+		}
+	}
+
+	return pmcValue;
+}

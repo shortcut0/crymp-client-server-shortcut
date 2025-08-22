@@ -141,15 +141,11 @@ bool CGameRules::Init(IGameObject* pGameObject)
 	if (m_pGameFramework->GetIViewSystem())
 		m_pGameFramework->GetIViewSystem()->AddListener(this);
 
-	m_script = GetEntity()->GetScriptTable();
-	m_script->GetValue("Client", m_clientScript);
-	m_script->GetValue("Server", m_serverScript);
-	m_script->GetValue("OnCollision", m_onCollisionFunc);
+	// Shortcut0
+	InitScriptTables();
 
 	m_collisionTable = gEnv->pScriptSystem->CreateTable();
 
-	m_clientStateScript = m_clientScript;
-	m_serverStateScript = m_serverScript;
 
 	m_scriptHitInfo.Create(gEnv->pScriptSystem);
 	m_scriptExplosionInfo.Create(gEnv->pScriptSystem);
@@ -340,7 +336,7 @@ void CGameRules::Update(SEntityUpdateContext& ctx, int updateSlot)
 		ProcessQueuedExplosions();
 		UpdateEntitySchedules(ctx.fFrameTime);
 
-		if (m_pShotValidator)
+		if (m_pShotValidator && !g_pGameCVars->server_DisableShotValidator)
 			m_pShotValidator->Update();
 
 		if (gEnv->bMultiplayer)
@@ -402,6 +398,7 @@ void CGameRules::ProcessEvent(SEntityEvent& event)
 	case ENTITY_EVENT_RESET:
 		if (m_pShotValidator)
 			m_pShotValidator->Reset();
+
 		m_timeOfDayInitialized = false;
 		ResetFrozen();
 
@@ -631,6 +628,13 @@ void CGameRules::OnClientDisconnect(int channelId, EDisconnectionCause cause, co
 	CActor* pActor = GetActorByChannelId(channelId);
 	//assert(pActor);
 
+	// Shortcut0
+	if (ISSM * pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnClientDisconnect(this, channelId, (int)cause, desc);
+		
+	}
+
 	if (!pActor || !keepClient)
 		if (g_pGame->GetServerSynchedStorage())
 			g_pGame->GetServerSynchedStorage()->OnClientDisconnect(channelId, false);
@@ -675,6 +679,13 @@ bool CGameRules::OnClientEnteredGame(int channelId, bool isReset)
 	CActor* pActor = GetActorByChannelId(channelId);
 	if (!pActor)
 		return false;
+
+
+	// Shortcut0
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnClientEnteredGame(this, channelId, isReset);
+	}
 
 	if (g_pGame->GetServerSynchedStorage())
 		g_pGame->GetServerSynchedStorage()->OnClientEnteredGame(channelId);
@@ -1192,6 +1203,12 @@ void CGameRules::KillPlayer(CActor* pActor, bool dropItem, bool ragdoll, EntityI
 	if (!gEnv->bServer)
 		return;
 
+	// Shortcut0
+	if (pActor->m_SvGodMode > 0)
+	{
+		return;
+	}
+
 	IInventory* pInventory = pActor->GetInventory();
 	EntityId itemId = pInventory ? pInventory->GetCurrentItem() : 0;
 	if (itemId && !pActor->GetLinkedVehicle())
@@ -1238,6 +1255,12 @@ void CGameRules::MovePlayer(CActor* pActor, const Vec3& pos, const Ang3& angles)
 	CActor::MoveParams params(pos, Quat(angles));
 	pActor->GetGameObject()->InvokeRMI(CActor::ClMoveTo(), params, eRMI_ToClientChannel | eRMI_NoLocalCalls, pActor->GetChannelId());
 	pActor->GetEntity()->SetWorldTM(Matrix34::Create(Vec3(1, 1, 1), params.rot, params.pos));
+
+	// Shortcut0
+	if (IScriptTable* pActorScript = pActor->GetEntity()->GetScriptTable())
+	{
+		pActorScript->SetValue("LastTeleport", gEnv->pTimer->GetAsyncTime().GetSeconds());
+	}
 }
 
 //------------------------------------------------------------------------
@@ -3227,6 +3250,38 @@ void CGameRules::SendChatMessage(EChatMessageType type, EntityId sourceId, Entit
 			} else {
 				return;
 			}
+
+			// Shortcut0: Extended functionality
+			SmartScriptTable MessageModifications;
+			if (pSSM->OnChatMessageEx(MessageModifications, type, sourceId, targetId, msg, m_SvChatIsFake) && MessageModifications.GetPtr())
+			{
+				/*
+				return {
+					Ok = true,
+					NewMessage = "Hello World",
+					NewSender = nil,
+					NewTarget = nil,
+				}
+				*/
+				bool ProcessMsg(true);
+				if (MessageModifications->GetValue("Ok", ProcessMsg) && !ProcessMsg)
+				{
+					return;
+				}
+				if (const char* ModifiedMsg; MessageModifications->GetValue("NewMessage", ModifiedMsg))
+				{
+					params.msg = ModifiedMsg;
+				}
+				if (ScriptHandle ModifiedSender; MessageModifications->GetValue("NewSender", ModifiedSender))
+				{
+					params.sourceId = ModifiedSender.n;
+				}
+				if (ScriptHandle ModifiedTarget; MessageModifications->GetValue("NewTarget", ModifiedTarget))
+				{
+					params.targetId = ModifiedTarget.n;
+				}
+				
+			}
 		}
 
 		ChatLog(type, sourceId, targetId, params.msg.c_str());
@@ -3919,6 +3974,12 @@ void CGameRules::NextLevel()
 	if (!gEnv->bServer)
 		return;
 
+	// Shortcut0
+	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->CanStartNextLevel())
+	{
+		return;
+	}
+
 	ILevelRotation* pLevelRotation = m_pGameFramework->GetILevelSystem()->GetLevelRotation();
 	if (!pLevelRotation->GetLength())
 		Restart();
@@ -4597,4 +4658,17 @@ void CGameRules::OnSetActorModel(CActor* pActor, int currTeamId)
 			pActor->SetFpItemHandsModel("objects/weapons/arms_global/arms_nanosuit_us.chr");
 		}
 	}
+}
+
+// =================================================================
+// Shortcut0
+
+void CGameRules::InitScriptTables()
+{
+	m_script = GetEntity()->GetScriptTable();
+	m_script->GetValue("Client", m_clientScript);
+	m_script->GetValue("Server", m_serverScript);
+	m_script->GetValue("OnCollision", m_onCollisionFunc);
+	m_clientStateScript = m_clientScript;
+	m_serverStateScript = m_serverScript;
 }

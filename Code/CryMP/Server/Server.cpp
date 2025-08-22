@@ -17,6 +17,9 @@
 #include "CryMP/Server/SSM.h"
 #include "CryMP/Server/SafeWriting/SafeWriting.h"
 
+// Shortcut0
+#include "CryMP/Server/Shortcut0/SC_Server.h"
+
 Server::Server()
 {
 }
@@ -68,6 +71,12 @@ void Server::Init(IGameFramework* pGameFramework)
 			CryLogAlways("$6[CryMP] Detected SSM: %s", ssm.c_str());
 			if (ssm == "SafeWriting") {
 				cGame->SetSSM(new CSafeWriting(pGameFramework, pGameFramework->GetISystem()));
+			} 
+
+			// Shortcut0 (Fix this identifier, maybe...)
+			else if (ssm == "Farquaad")
+			{
+				cGame->SetSSM(new SC_Server(pGameFramework, pGameFramework->GetISystem()));
 			}
 		}
 	}
@@ -77,7 +86,10 @@ void Server::Init(IGameFramework* pGameFramework)
 
 void Server::UpdateLoop()
 {
-	gEnv->pConsole->ExecuteString("exec autoexec.cfg");
+	if (CGame* pGame = g_pGame; !pGame || (pGame->GetSSM() && pGame->GetSSM()->LoadAutoexec()))
+	{
+		gEnv->pConsole->ExecuteString("exec autoexec.cfg");
+	}
 
 	const bool haveFocus = true;
 	const unsigned int updateFlags = 0;

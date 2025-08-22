@@ -1144,6 +1144,18 @@ public:
 	virtual bool IsAlien() { return false; }
 
 
+	// Shortcut0
+	enum SvCheatModes
+	{
+		UnlimitedAmmo = 0,
+		UnlimitedItems,
+		RapidFire,
+	};
+	float m_SvDeathTime = 0.f;
+	int m_SvGodMode = 0;
+	int m_SvUnlimitedAmmo = 0;
+	int m_SvUnlimitedItems = 0;
+
 protected:
 
 	virtual void SetMaterialRecursive(ICharacterInstance* charInst, bool undo, IMaterial* newMat = 0);

@@ -848,6 +848,13 @@ public:
 
 public:
 
+	// Shortcut0
+	virtual void SvChangeAccessory(const ItemString& name);
+	virtual void SvRemoveAccessory(const ItemString& name);
+	virtual void SvSwitchAccessory(const ItemString& name);
+	virtual bool SvDetachAccessory(const ItemString& name);
+
+
 	// params
 	virtual bool ReadItemParams(const IItemParamsNode *root);
 	virtual bool ReadParams(const IItemParamsNode *params);

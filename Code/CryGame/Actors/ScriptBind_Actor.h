@@ -155,6 +155,20 @@ public:
 	//misc
 	//virtual int MeleeEffect(IFunctionHandler *pH);
 
+	//------------------------------------------------------------------------
+	// Shortcut0
+	virtual int IsLagging(IFunctionHandler* pH);
+	virtual int SetCheatMode(IFunctionHandler* pH, int mode, int value);
+	virtual int HasCheatMode(IFunctionHandler* pH, int mode);
+	virtual int SetGodMode(IFunctionHandler* pH, int mode);
+	virtual int GetRotation(IFunctionHandler* pH);
+	virtual int GetVehicleViewDir(IFunctionHandler* pH);
+	virtual int GetLookDirection(IFunctionHandler* pH);
+	virtual int GetNetAimDir(IFunctionHandler* pH);
+	virtual int GetLean(IFunctionHandler* pH);
+	virtual int RequestMovement(IFunctionHandler* pH, SmartScriptTable pRequest);
+
+
 protected:
 	CActor* GetActor(IFunctionHandler* pH);
 

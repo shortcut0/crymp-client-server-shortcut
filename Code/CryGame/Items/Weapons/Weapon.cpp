@@ -44,6 +44,9 @@ History:
 #include "CryGame/Actors/Player/IPlayerInput.h"
 #include "CryCommon/CryAction/IWorldQuery.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+
 //------------------------------------------------------------------------
 CWeapon::CWeapon()
 	: m_fm(0),
@@ -78,6 +81,10 @@ CWeapon::CWeapon()
 	m_shootSeqN(1)
 {
 	RegisterActions();
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnWeaponInit(this);
+	}
 }
 
 //------------------------------------------------------------------------1
@@ -1554,6 +1561,19 @@ int CWeapon::GetAmmoCount(IEntityClass* pAmmoType) const
 //------------------------------------------------------------------------
 void CWeapon::SetAmmoCount(IEntityClass* pAmmoType, int count)
 {
+	// Shortcut0
+	if (CActor* pOwner = GetOwnerActor(); pOwner->m_SvGodMode > 0)
+	{
+		if (IInventory* pInventory = pOwner->GetInventory())
+		{
+			float AmmoCapacity = pInventory->GetAmmoCapacity(pAmmoType);
+			if (AmmoCapacity > 0)
+			{
+				count = AmmoCapacity;
+			}
+		}
+	}
+
 	TAmmoMap::iterator it = m_ammo.find(pAmmoType);
 	if (it != m_ammo.end())
 		it->second = count;

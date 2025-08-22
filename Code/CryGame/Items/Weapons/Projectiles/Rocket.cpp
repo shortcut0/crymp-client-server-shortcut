@@ -15,6 +15,9 @@ History:
 #include "CryGame/Game.h"
 #include "Bullet.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+
 
 //------------------------------------------------------------------------
 CRocket::CRocket()
@@ -91,6 +94,15 @@ void CRocket::HandleEvent(const SGameObjectEvent& event)
 		}
 
 		IEntity* pTarget = pCollision->iForeignData[1] == PHYS_FOREIGN_ID_ENTITY ? (IEntity*)pCollision->pForeignData[1] : 0;
+
+		// Shortcut0
+		if (ISSM* pSSM = g_pGame->GetSSM(); pTarget)
+		{
+			if (!pSSM->CheckRocketCollision(this, GetOwnerId(), pTarget))
+			{
+				return;
+			}
+		}
 
 		Explode(true, true, pCollision->pt, pCollision->n, pCollision->vloc[0], pTarget ? pTarget->GetId() : 0);
 	}

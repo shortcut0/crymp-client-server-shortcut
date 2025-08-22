@@ -149,6 +149,17 @@ CScriptBind_Actor::CScriptBind_Actor(ISystem* pSystem)
 
 	SCRIPT_REG_TEMPLFUNC(SetSearchBeam, "dir");
 
+	// Shortcut0
+	SCRIPT_REG_FUNC(GetVehicleViewDir);
+	SCRIPT_REG_FUNC(GetRotation);
+	SCRIPT_REG_FUNC(GetLookDirection);
+	SCRIPT_REG_FUNC(GetNetAimDir);
+	SCRIPT_REG_FUNC(GetLean);
+	SCRIPT_REG_FUNC(IsLagging);
+	SCRIPT_REG_TEMPLFUNC(SetGodMode, "mode");
+	SCRIPT_REG_TEMPLFUNC(SetCheatMode, "mode, value");
+	SCRIPT_REG_TEMPLFUNC(HasCheatMode, "mode");
+
 	
 	//CryMP:
 	SCRIPT_REG_TEMPLFUNC(EnableThirdPerson, "");
@@ -1883,3 +1894,249 @@ int CScriptBind_Actor::GetLookAtPoint(IFunctionHandler* pH, float maxDist)
 
 	return pH->EndFunction();
 }
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::IsLagging(IFunctionHandler* pH)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	bool IsLagging = false;
+	int ChannelId = pActor->GetChannelId();
+	if (INetChannel* pNetChannel = gEnv->pGame->GetIGameFramework()->GetNetChannel(ChannelId))
+	{
+		if (pNetChannel->GetContextViewState() >= eCVS_InGame)
+		{
+			IsLagging = pNetChannel->IsSufferingHighLatency(gEnv->pTimer->GetAsyncTime());
+		}
+	}
+
+	return pH->EndFunction(IsLagging);
+}
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::GetLean(IFunctionHandler* pH)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	if (IMovementController* pMC = pActor->GetMovementController()) {
+		SMovementState ms;
+		pMC->GetMovementState(ms);
+		return pH->EndFunction(ms.lean);
+	}
+
+	return pH->EndFunction();
+}
+
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::HasCheatMode(IFunctionHandler* pH, int mode)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	int val = 0;
+
+	switch (mode) {
+	case CActor::SvCheatModes::UnlimitedAmmo: // unlimitedammo
+	{
+		val = pActor->m_SvUnlimitedAmmo;// = value;
+		break;
+	}
+	case CActor::SvCheatModes::UnlimitedItems:
+	{
+		val = pActor->m_SvUnlimitedItems;// = value;
+		break;
+	}
+	case CActor::SvCheatModes::RapidFire: // rapid fire
+	{
+		///val = pActor->m_rapidFire;// = value;
+		break;
+	}
+	default:
+		break;
+	}
+
+	return pH->EndFunction(val);
+}
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::SetCheatMode(IFunctionHandler* pH, int mode, int value)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	switch (mode) {
+	case CActor::SvCheatModes::UnlimitedAmmo:
+	{
+		pActor->m_SvUnlimitedAmmo = value;
+		break;
+	}
+	case CActor::SvCheatModes::UnlimitedItems:
+	{
+		pActor->m_SvUnlimitedItems = value;
+		break;
+	}
+	case CActor::SvCheatModes::RapidFire: // rapid fire
+	{
+		//pActor->m_rapidFire = value;
+		break;
+	}
+	default:
+		break;
+	}
+
+	return pH->EndFunction();
+}
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::SetGodMode(IFunctionHandler* pH, int mode)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	pActor->m_SvGodMode = mode;
+	return pH->EndFunction();
+}
+
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::RequestMovement(IFunctionHandler* pH, SmartScriptTable pRequest)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	if (IMovementController* pMC = pActor->GetMovementController())
+	{
+		CryLogAlways("mc ok");
+
+		CMovementRequest pMR;
+		// declare
+		Vec3 vForcedNavigation = Vec3(ZERO);
+		Vec3 vMoveTarget = Vec3(ZERO);
+		Vec3 vFireTarget = Vec3(ZERO);
+		Vec3 vAimTarget = Vec3(ZERO);
+		Vec3 vLookAt = Vec3(ZERO);
+		float fDesiredSpeed = -1.f;
+		float fPesudoSpeed = -1.f;
+
+		pRequest->GetValue("MoveTarget", vMoveTarget);
+		pRequest->GetValue("ForcedNavigation", vForcedNavigation);
+		pRequest->GetValue("FireTarget", vFireTarget);
+		pRequest->GetValue("AimTarget", vAimTarget);
+		pRequest->GetValue("LookAt", vLookAt);
+
+		pRequest->GetValue("DesiredSpeed", fDesiredSpeed);
+		pRequest->GetValue("PesudoSpeed", fPesudoSpeed);
+
+		// update
+		if (fDesiredSpeed != -1.f)
+			pMR.SetDesiredSpeed(fDesiredSpeed);
+		else
+			pMR.ClearDesiredSpeed();
+
+		if (fPesudoSpeed != -1.f)
+			pMR.SetPseudoSpeed(fPesudoSpeed);
+		else
+			pMR.ClearPseudoSpeed();
+
+		if (vMoveTarget.GetLength() > 0)
+			pMR.SetMoveTarget(vMoveTarget);
+		else
+			pMR.ClearMoveTarget();
+
+		if (vAimTarget.GetLength() > 0)
+			pMR.SetAimTarget(vAimTarget);
+		else
+			pMR.ClearAimTarget();
+
+		if (vLookAt.GetLength() > 0)
+			pMR.SetLookTarget(vAimTarget);
+		else
+			pMR.ClearLookTarget();
+
+		if (vForcedNavigation.GetLength() > 0)
+			pMR.SetForcedNavigation(vForcedNavigation);
+		else
+			pMR.ClearForcedNavigation();
+
+		if (vFireTarget.GetLength() > 0)
+			pMR.SetFireTarget(vFireTarget);
+		else
+			pMR.ClearFireTarget();
+
+		pMC->RequestMovement(pMR);
+	}
+	return pH->EndFunction();
+}
+
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::GetVehicleViewDir(IFunctionHandler* pH)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	Vec3 dir = ((CPlayer*)pActor)->GetVehicleViewDir();
+	return pH->EndFunction(dir);
+}
+
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::GetLookDirection(IFunctionHandler* pH)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	Vec3 dir = ((CPlayer*)pActor)->m_NetLookDirection;
+	return pH->EndFunction(dir);
+}
+
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::GetNetAimDir(IFunctionHandler* pH)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	Vec3 dir = ((CPlayer*)pActor)->GetNetAimDir();
+	return pH->EndFunction(dir);
+}
+
+
+//------------------------------------------------------------------------
+// SERVER
+int CScriptBind_Actor::GetRotation(IFunctionHandler* pH)
+{
+	CActor* pActor = GetActor(pH);
+	if (!pActor)
+		return pH->EndFunction();
+
+	Quat qrot = pActor->GetEntity()->GetRotation();
+	Vec3 rot;
+	rot.x = qrot.GetFwdX();
+	rot.y = qrot.GetFwdY();
+	rot.z = qrot.GetFwdZ();
+
+	return pH->EndFunction(rot);
+}
+

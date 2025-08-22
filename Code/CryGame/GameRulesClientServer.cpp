@@ -44,6 +44,12 @@ History:
 //------------------------------------------------------------------------
 void CGameRules::ValidateShot(EntityId playerId, EntityId weaponId, uint16 seq, uint8 seqr)
 {
+
+	if (g_pGameCVars->server_DisableShotValidator)
+	{
+		return;
+	}
+
 	if (m_pShotValidator)
 		m_pShotValidator->AddShot(playerId, weaponId, seq, seqr);
 }
@@ -238,31 +244,47 @@ void CGameRules::ServerHit(const HitInfo& hitInfo)
 		}
 	}
 
-	if (m_processingHit)
+	// Shortcut0: disable hit queue (slow)
+	bool UseHitQueue = !g_pGameCVars->server_DisableHitQueue;
+	if (UseHitQueue)
 	{
-		m_queuedHits.push(info);
-		return;
+
+		if (m_processingHit)
+		{
+			m_queuedHits.push(info);
+			return;
+		}
+		++m_processingHit;
 	}
 
-	++m_processingHit;
-
+	// Vanilla
 	ProcessServerHit(info);
 
-	while (!m_queuedHits.empty())
+	// Shortcut0: disable hit queue (slow)
+	if (UseHitQueue)
 	{
-		HitInfo qinfo(m_queuedHits.front());
-		ProcessServerHit(qinfo);
-		m_queuedHits.pop();
-	}
+		while (!m_queuedHits.empty())
+		{
+			HitInfo qinfo(m_queuedHits.front());
+			ProcessServerHit(qinfo);
+			m_queuedHits.pop();
+		}
 
-	--m_processingHit;
+		--m_processingHit;
+	}
 }
 
 //------------------------------------------------------------------------
 void CGameRules::ProcessServerHit(HitInfo& hitInfo)
 {
-	if (m_pShotValidator && !m_pShotValidator->ProcessHit(hitInfo))
-		return;
+	// Shortcut0
+	if (!g_pGameCVars->server_DisableShotValidator)
+	{
+		if (m_pShotValidator && !m_pShotValidator->ProcessHit(hitInfo))
+		{
+			return;
+		}
+	}
 
 	bool ok = true;
 	// check if shooter is alive
@@ -271,7 +293,19 @@ void CGameRules::ProcessServerHit(HitInfo& hitInfo)
 	if (hitInfo.shooterId)
 	{
 		if (pShooter && pShooter->GetHealth() <= 0)
+		{
 			ok = false;
+			if (g_pGameCVars->server_ProcessZombieHits)
+			{
+				float ZombieHit_Timeout = g_pGameCVars->server_ProcessZombieHitsTimeout;
+				float ZombieHit_Elapsed = (pShooter->m_SvDeathTime - gEnv->pTimer->GetCurrTime());
+				if (ZombieHit_Timeout <= 0 || ZombieHit_Timeout > ZombieHit_Elapsed)
+				{
+					ok = true;
+					CryLogAlways("[debug] allowing death hit");
+				}
+			}
+		}
 	}
 
 	if (hitInfo.targetId)
@@ -321,7 +355,15 @@ void CGameRules::ProcessServerHit(HitInfo& hitInfo)
 //------------------------------------------------------------------------
 void CGameRules::ServerExplosion(const ExplosionInfo& explosionInfo)
 {
-	m_queuedExplosions.push(explosionInfo);
+	bool UseQueue = !g_pGameCVars->server_DisableExplosionQueue;
+	if (UseQueue)
+	{
+		m_queuedExplosions.push(explosionInfo);
+	}
+	else
+	{
+		ProcessServerExplosion(explosionInfo);
+	}
 }
 
 //------------------------------------------------------------------------
@@ -329,8 +371,19 @@ void CGameRules::ProcessServerExplosion(const ExplosionInfo& explosionInfo)
 {
 	//CryLog("[ProcessServerExplosion] (frame %i) shooter %i, damage %.0f, radius %.1f", gEnv->pRenderer->GetFrameID(), explosionInfo.shooterId, explosionInfo.damage, explosionInfo.radius);
 
-	GetGameObject()->InvokeRMI(ClExplosion(), explosionInfo, eRMI_ToRemoteClients);
-	ClientExplosion(explosionInfo);
+	ExplosionInfo ModifiedInfo = explosionInfo;
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		if (!pSSM->ProcessServerExplosion(ModifiedInfo))
+		{
+			// SC Fixme!
+			//ModifiedInfo.effect_name = "sc_effects.test.a";
+			return;
+		}
+	}
+
+	GetGameObject()->InvokeRMI(ClExplosion(), ModifiedInfo, eRMI_ToRemoteClients);
+	ClientExplosion(ModifiedInfo);
 }
 
 //------------------------------------------------------------------------
@@ -817,6 +870,9 @@ IMPLEMENT_RMI(CGameRules, ClRenameEntity)
 //------------------------------------------------------------------------
 IMPLEMENT_RMI(CGameRules, SvRequestChatMessage)
 {
+	// Shortcut0: Reset IsFake
+	m_SvChatIsFake = false;
+
 	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->IsRMILegitimate(pNetChannel, params.sourceId)) {
 		return true;
 	}

@@ -473,6 +473,22 @@ struct SCVars
 	int         mp_healthBars;
 	int         mp_recycleProjectiles;
 
+	// Shortcut
+	int			server_DisablePlayerMovementResetting;
+	int			server_DisableShotValidator;
+	int			server_DisableHitQueue;
+	int			server_DisableExplosionQueue;
+	int			server_C4_Limit;
+	int			server_C4_MakeHitable;
+	int			server_c4_SticksToPlayers;
+	int			server_c4_SticksToAllSpecies;
+	int			server_EnableTurretIdleState;
+	int			server_IgnoreOwnerProjectileCollisions;
+	float		server_IgnoreOwnerProjectileCollisionsTimeout;
+	int			server_ProcessZombieHits;
+	float		server_ProcessZombieHitsTimeout;
+	int			server_AllowScanCloakedPlayers;
+
 	SCVars();
 	~SCVars();
 

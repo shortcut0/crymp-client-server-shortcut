@@ -76,6 +76,29 @@ public:
 	int ActivateLamLaser(IFunctionHandler* pH, bool activate);
 	int ActivateLamLight(IFunctionHandler* pH, bool activate);
 
+	// Shortcut0
+
+	// Server
+	int SvRemoveAccessory(IFunctionHandler* pH, const char* name);
+	int SvChangeAccessory(IFunctionHandler* pH, const char* name);
+	int GetAttachedAccessories(IFunctionHandler* pH);
+	int SetProjectileVelocitySpeedScale(IFunctionHandler* pH, float scale); // such long name..
+
+	int Sv_GetFireRate(IFunctionHandler* pH);
+	int Sv_Melee(IFunctionHandler* pH);
+	int Sv_SetFiringInfo(IFunctionHandler* pH);
+	int Sv_RequestStartFire(IFunctionHandler* pH);
+	int Sv_RequestStopFire(IFunctionHandler* pH);
+	int Sv_ResetFiringInfo(IFunctionHandler* pH);
+	int Sv_GetFireModeName(IFunctionHandler* pH);
+	int Sv_IsFiring(IFunctionHandler* pH);
+	int Sv_Update(IFunctionHandler* pH);
+	int Sv_UpdateFM(IFunctionHandler* pH);
+	int Sv_SetOwnerID(IFunctionHandler* pH, ScriptHandle ownerId);
+
+	//int Sv_SetRMIPlanting(IFunctionHandler* pH, bool mode); // ?? TODO
+	//int Sv_SetPseudoOwnerId(IFunctionHandler* pH, ScriptHandle id); // ?? TODO
+
 private:
 	void RegisterGlobals();
 	void RegisterMethods();

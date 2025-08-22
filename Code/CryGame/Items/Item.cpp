@@ -1539,7 +1539,7 @@ void CItem::PickUp(EntityId pickerId, bool sound, bool select, bool keepHistory)
 		return;
 
 	//1) First check inventory restrictions (only in the server)
-	if (IsServer())
+	if (IsServer() /*shortcut0 ==>*/ && pActor->m_SvUnlimitedItems <= 0) /*<== shortcut0*/
 	{
 		if (!pActor->CheckInventoryRestrictions(GetEntity()->GetClass()->GetName()))
 		{
@@ -3128,4 +3128,84 @@ SItemStrings::SItemStrings()
 	lever_layer_2 = "lever_layer_2";
 
 };
+
+//------------------------------------------------------------------------
+// Server
+void CItem::SvChangeAccessory(const ItemString& name)
+{
+	if (!GetEntity()) 
+	{
+		return;
+	}
+	SvSwitchAccessory(name);
+}
+
+//------------------------------------------------------------------------
+// Server
+void CItem::SvRemoveAccessory(const ItemString& name)
+{
+	SvDetachAccessory(name);
+}
+
+//------------------------------------------------------------------------
+// Server
+bool CItem::SvDetachAccessory(const ItemString& inAccessory)
+{
+	if (!GetIWeapon() || !GetEntity()) 
+	{
+		return false;
+	}
+
+	if (m_accessories.empty()) 
+	{
+		return false;
+	}
+
+	bool RemovedAny = false;
+	bool RemoveAll = !strcmp(inAccessory.c_str(), "all");
+
+
+	std::vector<std::string> detach;
+	for (TAccessoryMap::iterator it = m_accessories.begin(); it != m_accessories.end(); it++)
+	{
+		if (RemoveAll) 
+		{
+			detach.push_back(std::string(it->first.c_str()));
+		}
+		else 
+		{
+			if (strcmp(it->first.c_str(), inAccessory.c_str()) == 0)
+			{
+				detach.push_back(std::string(it->first.c_str()));
+				break;
+			}
+		}
+	}
+
+	if (!detach.empty()) {
+		for (const std::string& name : detach) 
+		{
+			RemovedAny = true;
+			AttachAccessory(ItemString(name.c_str()), false, true, true);
+			GetGameObject()->InvokeRMI(ClAttachAccessory(), RequestAttachAccessoryParams(name.c_str()), eRMI_ToAllClients | eRMI_NoLocalCalls);
+		}
+	}
+
+
+	return RemovedAny;
+}
+
+//------------------------------------------------------------------------
+// Server
+void CItem::SvSwitchAccessory(const ItemString& inAccessory)
+{
+	if (!GetIWeapon())
+	{
+		return;
+	}
+
+	SvDetachAccessory(inAccessory);
+	AttachAccessory(inAccessory, true, true, true, false);
+	GetGameObject()->InvokeRMI(ClAttachAccessory(), RequestAttachAccessoryParams(inAccessory.c_str()), eRMI_ToAllClients | eRMI_NoLocalCalls);
+}
 

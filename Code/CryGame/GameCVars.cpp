@@ -636,6 +636,23 @@ void SCVars::InitCVars(IConsole* pConsole)
 	pConsole->Register("mp_netAimLerpFactorCrymp", &mp_netAimLerpFactorCrymp, 42.f, VF_NOT_NET_SYNCED/*VF_CHEAT*/, "Set aim smoothing for other clients when mp_crymp 1 (1-50, 0:off)");
 	pConsole->Register("mp_explosiveSilhouettes", &mp_explosiveSilhouettes, 0, VF_NOT_NET_SYNCED/*VF_CHEAT*/, "Enable new indicators for explosives");
 	pConsole->Register("mp_recycleProjectiles", &mp_recycleProjectiles, 1, VF_NOT_NET_SYNCED/*VF_CHEAT*/, "Recycle projectiles");
+
+	// Shortcut0
+	pConsole->Register("server_DisableShotValidator", &server_DisableShotValidator, 0, VF_NOT_NET_SYNCED, "Disables the ShotValidator (It's useless?)");
+	pConsole->Register("server_DisableHitQueue", &server_DisableHitQueue, 0, VF_NOT_NET_SYNCED, "Disables the Hit Queue for Server Hit Processing (It's slow!)");
+	pConsole->Register("server_DisableExplosionQueue", &server_DisableExplosionQueue, 0, VF_NOT_NET_SYNCED, "Disables the Explosion Queue (Recommended to keep it active, avoids lag spikes on huge chain explosions)");
+	pConsole->Register("server_C4_Limit", &server_C4_Limit, 6, VF_NOT_NET_SYNCED, "Sets the total limit of C4 explosives a player can place");
+	pConsole->Register("server_C4_MakeHitable", &server_C4_MakeHitable, 0, VF_NOT_NET_SYNCED, "Enables the ability to fire at and blow up C4 projectiles!");
+	pConsole->Register("server_c4_SticksToPlayers", &server_c4_SticksToPlayers, 0, VF_NOT_NET_SYNCED, "Enables C4 projectiles sticking to players");
+	pConsole->Register("server_c4_SticksToAllSpecies", &server_c4_SticksToAllSpecies, 0, VF_NOT_NET_SYNCED, "Enables C4 projectiles sticking to all species");
+	pConsole->Register("server_DisablePlayerMovementResetting", &server_DisablePlayerMovementResetting, 1, VF_NOT_NET_SYNCED, "Disables resetting of movement when a player has high latency");
+	pConsole->Register("server_EnableTurretIdleState", &server_EnableTurretIdleState, 0, VF_NOT_NET_SYNCED, "Enables idle mode when turrets have no valid target (reduces their update rate to preserve CPU)");
+	pConsole->Register("server_IgnoreOwnerProjectileCollisions", &server_IgnoreOwnerProjectileCollisions, 0, VF_NOT_NET_SYNCED, "Enables Server ignoring rocket collisions with its owner (or their vehicle)");
+	pConsole->Register("server_IgnoreOwnerProjectileCollisionsTimeout", &server_IgnoreOwnerProjectileCollisionsTimeout, 8, VF_NOT_NET_SYNCED, "Sets the timeout after which owner collisions are triggered again");
+	pConsole->Register("server_ProcessZombieHits", &server_ProcessZombieHits, 0, VF_NOT_NET_SYNCED, "Will enable of processing 'Zombie'-hits. Meaning hits landed even after death will be processed");
+	pConsole->Register("server_ProcessZombieHitsTimeout", &server_ProcessZombieHitsTimeout, 7.5, VF_NOT_NET_SYNCED, "The timeout value after which Zombie hits will no longer be processed");
+	pConsole->Register("server_AllowScanCloakedPlayers", &server_AllowScanCloakedPlayers, 1, VF_NOT_NET_SYNCED, "Enables or disables the ability to scan people while they are in cloak mode");
+
 }
 
 //------------------------------------------------------------------------
@@ -949,6 +966,20 @@ void SCVars::ReleaseCVars()
 	pConsole->UnregisterVariable("mp_messageCenterColor", true);
 	pConsole->UnregisterVariable("mp_radioTagging", true);
 	pConsole->UnregisterVariable("mp_healthBars", true);
+
+	// Shortcut
+	pConsole->UnregisterVariable("server_DisableShotValidator", true);
+	pConsole->UnregisterVariable("server_DisableHitQueue", true);
+	pConsole->UnregisterVariable("server_DisableExplosionQueue", true);
+	pConsole->UnregisterVariable("server_DisablePlayerMovementResetting", true);
+	pConsole->UnregisterVariable("server_c4_limit", true);
+	pConsole->UnregisterVariable("server_C4_MakeHitable", true);
+	pConsole->UnregisterVariable("server_EnableTurretIdleState", true);
+	pConsole->UnregisterVariable("server_IgnoreOwnerProjectileCollisions", true);
+	pConsole->UnregisterVariable("server_IgnoreOwnerProjectileCollisionsTimeout", true);
+	pConsole->UnregisterVariable("server_ProcessZombieHits", true);
+	pConsole->UnregisterVariable("server_ProcessZombieHitsTimeout", true);
+	pConsole->UnregisterVariable("server_AllowScanCloakedPlayers", true);
 }
 
 //------------------------------------------------------------------------

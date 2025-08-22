@@ -598,6 +598,11 @@ public:
 	virtual void OnEnterFirstPerson() override;
 	virtual void OnEnterThirdPerson() override;
 
+	// Shortcut0
+	EntityId m_LastFiredAmmoId;
+	const char* m_LastFiredAmmoClass;
+	float m_ProjectileVelocitySpeedScale = 1.f; // SC FIXME
+
 protected:
 	virtual bool ReadItemParams(const IItemParamsNode* params);
 	const IItemParamsNode* GetFireModeParams(const char* name);

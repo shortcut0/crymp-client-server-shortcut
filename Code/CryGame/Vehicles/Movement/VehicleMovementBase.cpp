@@ -34,6 +34,9 @@ IActorSystem* CVehicleMovementBase::m_pActorSystem = 0;
 CVehicleMovementBase::TSurfaceSoundInfo CVehicleMovementBase::m_surfaceSoundInfo;
 float CVehicleMovementBase::m_sprintTime = 0.f;
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+
 
 //------------------------------------------------------------------------
 CVehicleMovementBase::CVehicleMovementBase()
@@ -217,6 +220,12 @@ bool CVehicleMovementBase::Init(IVehicle* pVehicle, const SmartScriptTable& tabl
 	}
 
 	ResetBoost();
+
+	// Shortcut0
+	if (ISSM* pSSM = g_pGame->GetSSM())
+	{
+		pSSM->OnVehicleInit(m_pEntity);
+	}
 
 	return true;
 }

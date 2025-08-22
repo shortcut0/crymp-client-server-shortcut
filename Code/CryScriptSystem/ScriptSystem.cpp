@@ -22,6 +22,10 @@ extern "C"
 #include "ScriptTable.h"
 #include "ScriptUtil.h"
 
+// Shortcut0
+#include "CryMP/Server/SSM.h"
+#include "CryGame/Game.h"
+
 static HSCRIPTFUNCTION RefToFunctionHandle(int ref)
 {
 	return reinterpret_cast<HSCRIPTFUNCTION>(static_cast<std::uintptr_t>(ref));
@@ -466,6 +470,17 @@ bool ScriptSystem::ExecuteFile(const char *fileName, bool raiseError, bool force
 		fileName = fileNameCryMP.c_str();
 	}
 
+	// ==================================
+	// Shortcut0
+	ISSM* pSSM = g_pGame->GetSSM();
+	std::string fileNameServer;
+	if (pSSM)
+	{
+		if (pSSM->OverwriteScriptPath(fileNameServer, fileName) && !fileNameServer.empty()) {
+			fileName = fileNameServer.c_str();
+		}
+	}
+
 	const bool isNew = this->AddToScripts(fileName);
 
 	if (forceReload)
@@ -489,8 +504,18 @@ bool ScriptSystem::ExecuteFile(const char *fileName, bool raiseError, bool force
 			// use script file path as its description
 			const char *description = fileName;
 
+			// Shortcut0; inform SSM
+			if (pSSM)
+			{
+				// make bool?
+				pSSM->OnLoadingScript(fileName);
+			}
 			// execute the file
 			success = ExecuteBuffer(content.data(), content.size(), description);
+			if (pSSM)
+			{
+				pSSM->OnScriptLoaded(fileName, success);
+			}
 		}
 		else
 		{
@@ -1062,13 +1087,33 @@ bool ScriptSystem::RemoveFromScripts(const char *fileName)
 
 int ScriptSystem::ErrorHandler(lua_State *L)
 {
-	const char *message = lua_tostring(L, 1);
 
-	CryLogErrorAlways("[Script] %s", message);
+	const char* message = lua_tostring(L, 1);
+
+	// ===============
+	// Shortcut0
+	ISSM* pSSM = g_pGame->GetSSM();
+	std::string FullMessage = (message ? message : "");
+	bool PrintErrors = (pSSM ? pSSM->LogScriptErrors() : true);
+
+
+	if (PrintErrors)
+		CryLogErrorAlways("[Script] %s", message);
 
 	for (const std::string & line : ScriptUtil::GetCallStack(L, 1))
 	{
-		CryLogErrorAlways("    %s", line.c_str());
+		if (PrintErrors)
+			CryLogErrorAlways("    %s", line.c_str());
+
+		// Shortcut0
+		FullMessage += (FullMessage.empty() ? "" : "\n") + line;
+	}
+
+	// =========================
+	// Shortcut0
+	if (pSSM)
+	{
+		pSSM->OnScriptError(FullMessage);
 	}
 
 	return 0;
