@@ -1562,7 +1562,7 @@ int CWeapon::GetAmmoCount(IEntityClass* pAmmoType) const
 void CWeapon::SetAmmoCount(IEntityClass* pAmmoType, int count)
 {
 	// Shortcut0
-	if (CActor* pOwner = GetOwnerActor(); pOwner->m_SvGodMode > 0)
+	if (CActor* pOwner = GetOwnerActor(); pOwner && pOwner->m_SvGodMode > 0) // fix crsh on client
 	{
 		if (IInventory* pInventory = pOwner->GetInventory())
 		{

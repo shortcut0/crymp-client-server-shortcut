@@ -23,6 +23,14 @@ class CRocket;
 class CWeapon;
 //struct Vec3;
 
+struct RMIRequest { // SC FIXME
+    const char* Function;
+    const char* CheatName;
+    INetChannel* NetChannel;
+    EntityId PretendId;
+    EntityId VictimId;
+};
+
 struct ISSM {
 public:
     ~ISSM() = default;
@@ -39,6 +47,10 @@ public:
     virtual std::optional<std::string> OnPlayerRename(IGameRules* pGR, IActor* pActor, const std::string& name) = 0;
 
     // Shortcut0
+    //virtual bool CheckRMIRequest(RMIRequest& pRequest) = 0;
+    virtual bool CheckRadioRequest(INetChannel *pChn, EntityId pClient, uint8 msg) = 0;
+    virtual bool CheckMeleeRequest(IEntity* pClient, IEntity* pFists) = 0;
+    virtual bool ChatLog(EChatMessageType type, EntityId senderId, EntityId targetId, const char* msg) = 0;
     virtual void OnClientEnteredGame(IGameRules* pGR, int channelId, bool isReset) = 0;
     virtual void OnClientDisconnect(IGameRules* pGR, int channelId, int cause, const char* desc) = 0;
     virtual bool CanStartNextLevel() = 0;

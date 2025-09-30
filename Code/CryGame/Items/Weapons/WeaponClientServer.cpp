@@ -637,6 +637,13 @@ IMPLEMENT_RMI(CWeapon, SvRequestMeleeAttack)
 
 	if (ok)
 	{
+
+		// SC
+		if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->CheckMeleeRequest(pActor->GetEntity(), GetEntity()))
+		{
+			return true;
+		}
+
 		GetGameObject()->InvokeRMI(CWeapon::ClMeleeAttack(), ClMeleeAttackParams(params.wmelee, params.pos, params.dir),
 			eRMI_ToOtherClients|eRMI_NoLocalCalls, m_pGameFramework->GetGameChannelId(pNetChannel));
 

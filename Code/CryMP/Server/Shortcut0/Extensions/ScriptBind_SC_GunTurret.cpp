@@ -43,6 +43,8 @@ void CScriptBind_SC_GunTurret::RegisterMethods()
 	SCRIPT_REG_TEMPLFUNC(StartFire, "secondary, fireTime");
 	SCRIPT_REG_TEMPLFUNC(StopFire, "secondary");
 
+	SCRIPT_REG_FUNC(OnTargetLocked); // Optional param 1 targetId
+	SCRIPT_REG_FUNC(ChangeTargetTo); // Optional param 1 targetId
 	SCRIPT_REG_FUNC(StopFireAll);
 	SCRIPT_REG_FUNC(ResetProperties);
 	SCRIPT_REG_FUNC(ResetLookAt);
@@ -197,26 +199,36 @@ int CScriptBind_SC_GunTurret::StartFire(IFunctionHandler *pH, bool secondary, fl
 	if (fireTime <= 0) // Reset
 	{ 
 		if (secondary)
+		{
 			pTurret->m_SC_WantFireSec = false;
+			pTurret->m_SC_WantFireTimeSec = CurrentTime;
+		}
 		else
+		{
 			pTurret->m_SC_WantFire = false;
+			pTurret->m_SC_WantFireTime = CurrentTime;
+		}
 
-		pTurret->m_SC_WantAimTime = CurrentTime;
 	} 
 	else
 	{
 		if (secondary)
+		{
 			pTurret->m_SC_WantFireSec = true;
+			pTurret->m_SC_WantFireTimeSec = CurrentTime + fireTime;
+		}
 		else
+		{
 			pTurret->m_SC_WantFire = true;
+			pTurret->m_SC_WantFireTime = CurrentTime + fireTime;
+		}
 
-		pTurret->m_SC_WantAimTime = CurrentTime + fireTime;
 	}
 	return pH->EndFunction();
 }
 
 //------------------------------------------------------------------------
-int CScriptBind_SC_GunTurret::StopFire(IFunctionHandler *pH, bool secondary)
+int CScriptBind_SC_GunTurret::StopFire(IFunctionHandler* pH, bool secondary)
 {
 	CGunTurret* pTurret = GetGunTurret(pH);
 	if (!pTurret)
@@ -225,9 +237,15 @@ int CScriptBind_SC_GunTurret::StopFire(IFunctionHandler *pH, bool secondary)
 	}
 
 	if (secondary)
+	{
 		pTurret->m_SC_WantFireSec = false;
+		pTurret->m_SC_WantFireTimeSec = -1.f;
+	}
 	else
+	{
 		pTurret->m_SC_WantFire = false;
+		pTurret->m_SC_WantFireTime = -1.f;
+	}
 
 	return pH->EndFunction();
 }
@@ -271,5 +289,51 @@ int CScriptBind_SC_GunTurret::ResetLookAt(IFunctionHandler *pH)
 
 	pTurret->m_SC_YawGoal = 999.f; // this means.. reset.. oof!
 	pTurret->m_SC_PitchGoal = 999.f; // this means.. reset.. oof!
+	return pH->EndFunction();
+}
+
+//------------------------------------------------------------------------
+int CScriptBind_SC_GunTurret::ChangeTargetTo(IFunctionHandler *pH)
+{
+	CGunTurret* pTurret = GetGunTurret(pH);
+	if (!pTurret)
+	{
+		return pH->EndFunction();
+	}
+
+	IEntity* pTarged;
+	if (pH->GetParamCount() >= 1)
+	{
+		ScriptHandle pTargedId;
+		if (pH->GetParam(1, pTargedId))
+		{
+			pTarged = gEnv->pEntitySystem->GetEntity(pTargedId.n);
+		}
+	}
+	pTurret->SC_ChangeTargetTo(pTarged ? pTarged : 0);
+	
+	return pH->EndFunction();
+}
+
+//------------------------------------------------------------------------
+int CScriptBind_SC_GunTurret::OnTargetLocked(IFunctionHandler *pH)
+{
+	CGunTurret* pTurret = GetGunTurret(pH);
+	if (!pTurret)
+	{
+		return pH->EndFunction();
+	}
+
+	IEntity* pTarged;
+	if (pH->GetParamCount() >= 1)
+	{
+		ScriptHandle pTargedId;
+		if (pH->GetParam(1, pTargedId))
+		{
+			pTarged = gEnv->pEntitySystem->GetEntity(pTargedId.n);
+		}
+	}
+	pTurret->SC_OnTargetLocked(pTarged ? pTarged : 0);
+	
 	return pH->EndFunction();
 }

@@ -1,5 +1,6 @@
 #include "CryGame/Actors/Actor.h"
 #include "..\SC_ServerEvents.h"
+#include "CryMP/Server/SSM.h"
 
 #include <cmath>  // For sqrt and pow functions
 
@@ -64,13 +65,14 @@ public:
 
 	// -----------------
 
-	template<class... Params>
-	bool CheckOwnerRequest(INetChannel* pNetChannel, EntityId pOwnerId, const char* sCheatName, const char* sFunctionPtr, bool positive, const Params &... params) {
+	//template<class... Params>
+	bool CheckOwnerRequest(RMIRequest &pRequest) {
 		if (!m_status)
 		{
 			return true; // ok
 		}
 
+		INetChannel* pNetChannel = pRequest.NetChannel;
 		uint16 pChannelId = m_pGameFramework->GetGameChannelId(pNetChannel);
 		if (!pChannelId) 
 		{
@@ -83,6 +85,7 @@ public:
 			return false; // no actor associated with this channel, drop request
 		}
 
+		EntityId pOwnerId = pRequest.PretendId;
 		CActor* pOwnerActor = GetActor(pOwnerId);
 		if (!pOwnerActor) 
 		{
@@ -99,8 +102,10 @@ public:
 		}
 
 		// We only call this if the ID has been spoofed!
+		const char* sCheatName = pRequest.CheatName;
+		const char* sFunctionPtr = pRequest.Function;
 		if (pActorId != pNetId && pOwnerActor->GetChannelId() != pChannelId) {
-			m_pEvents->Call(SERVER_SCRIPT_EVENT_OnCheat, pChannelId, sCheatName, sFunctionPtr, ScriptHandle(pNetId), ScriptHandle(pActorId), positive, params...);
+			m_pEvents->Call(SERVER_SCRIPT_EVENT_OnCheat, pChannelId, sCheatName, sFunctionPtr, ScriptHandle(pNetId), ScriptHandle(pActorId));
 			return false; // owner does not match channel owner, probable cheat!!
 		}
 

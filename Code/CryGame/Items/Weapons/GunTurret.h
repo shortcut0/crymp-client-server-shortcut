@@ -309,6 +309,14 @@ public:
   // =============================================================================
   // Shortcut0
 
+  void SC_OnTargetLocked(IEntity *pTarget = 0) {
+	  OnTargetLocked(pTarget);
+  }
+
+  void SC_ChangeTargetTo(IEntity *pTarget = 0) {
+	  ChangeTargetTo(pTarget);
+  }
+
   void SC_UpdateAimGoal(Vec3 Pos, float dT);
   void SC_ResetProperties();
 
@@ -319,6 +327,7 @@ public:
   float m_SC_PitchGoal = 999.f;
   float m_SC_YawGoal = 999.f;
   float m_SC_WantFireTime = -1.f; // just FIRE
+  float m_SC_WantFireTimeSec = -1.f; // just FIRE
   float m_SC_WantAimTime = -1.f; // just AIM
   float m_SC_WantTargetTime = -1.f; // just FIRE at TARGET
 

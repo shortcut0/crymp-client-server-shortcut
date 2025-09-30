@@ -191,7 +191,7 @@ void SC_ServerEvents::OnMelee(IWeapon* pWeapon, EntityId shooterId) {
 
 	if (CWeapon* pWpn = static_cast<CWeapon*>(pWeapon)) {
 		EntityId weaponId = pWpn->GetEntityId();
-		Call(SERVER_SCRIPT_EVENT_OnMelee, ScriptHandle(shooterId), ScriptHandle(weaponId));
+	//	Call(SERVER_SCRIPT_EVENT_OnMelee, ScriptHandle(shooterId), ScriptHandle(weaponId));
 	}
 }
 
@@ -206,6 +206,8 @@ void SC_ServerEvents::OnStopTargetting(IWeapon* pWeapon) {
 }
 
 
-void SC_ServerEvents::OnSelected(IWeapon* pWeapon, bool selected) {
+void SC_ServerEvents::OnSelected(IWeapon* pWeapon, bool selected) 
+{
 
+	
 }

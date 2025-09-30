@@ -3205,6 +3205,12 @@ bool CGameRules::CanReceiveChatMessage(EChatMessageType type, EntityId sourceId,
 //------------------------------------------------------------------------
 void CGameRules::ChatLog(EChatMessageType type, EntityId sourceId, EntityId targetId, const char* msg)
 {
+
+	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->ChatLog(type, sourceId, targetId, msg))
+	{
+		return;
+	}
+
 	IEntity* pSource = m_pEntitySystem->GetEntity(sourceId);
 	IEntity* pTarget = m_pEntitySystem->GetEntity(targetId);
 	const char* sourceName = pSource ? pSource->GetName() : "<unknown>";
@@ -4666,6 +4672,11 @@ void CGameRules::OnSetActorModel(CActor* pActor, int currTeamId)
 void CGameRules::InitScriptTables()
 {
 	m_script = GetEntity()->GetScriptTable();
+	if (!m_script)
+	{
+		CryLogAlways("$4FATAL: g_gameRules Script Table not found!");
+		return;
+	}
 	m_script->GetValue("Client", m_clientScript);
 	m_script->GetValue("Server", m_serverScript);
 	m_script->GetValue("OnCollision", m_onCollisionFunc);

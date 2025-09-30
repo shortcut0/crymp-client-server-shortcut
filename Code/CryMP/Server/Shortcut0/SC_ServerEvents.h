@@ -73,6 +73,7 @@ enum EServerScriptEvents
 	SERVER_SCRIPT_EVENT_OnLoadingScript,
 	SERVER_SCRIPT_EVENT_OnLevelStart,
 	SERVER_SCRIPT_EVENT_OnEnterWeaponModify,
+	SERVER_SCRIPT_EVENT_OnRadio,
 
 	// must be lvst
 	SERVER_SCRIPT_EVENT_MAX
@@ -163,6 +164,7 @@ private:
 		"OnLoadingScript",
 		"OnLevelStart",
 		"OnEnterWeaponModify",
+		"OnRadio",
 	};
 
 public:

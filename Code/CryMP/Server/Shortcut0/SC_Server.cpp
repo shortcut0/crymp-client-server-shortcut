@@ -165,9 +165,6 @@ void SC_Server::Init(IGameFramework* pGameFramework)
 	{
 		cfg = m_ServerFolder + "\\Config\\Init-Headless.cfg";
 	}
-
-	ReadCfg(cfg);
-	SetCVars();
 	//set cvars
 
 	// -----------
@@ -188,12 +185,13 @@ void SC_Server::Init(IGameFramework* pGameFramework)
 
 	m_pServerUtils->Init();
 
+	SetCVars();
 	InitCommands(pConsole);
 	InitCVars(pConsole);
 
 	InitMasters();
 
-
+	ReadCfg(cfg);
 
 	m_Initialized = true;
 	m_tickGoal = 1.f;
@@ -214,7 +212,6 @@ void SC_Server::Init(IGameFramework* pGameFramework)
 	//LoadScript();
 
 	// Enable network multithreadding
-	// gEnv->pNetwork->EnableMultithreading(true);
 
 	// -----------
 	// Load Script File
@@ -783,7 +780,18 @@ void SC_Server::LoadScriptConfig() {
 	else
 	{
 		m_UseAutomaticScriptRedirection = UseAutomaticScriptRedirection;
-		Log("Automatic Script-Redirecting: %s", (UseOnlyHTTP ? "true" : "false"));
+		Log("Automatic Script-Redirecting: %s", (UseAutomaticScriptRedirection ? "true" : "false"));
+	}
+
+	bool Multithreading;
+	if (m_pSS->GetGlobalValue("Server_CPPConfig.EnableCryNetworkMultithreading", Multithreading))
+	{
+		gEnv->pNetwork->EnableMultithreading(Multithreading);
+		Log("Setting CryNetwork Multithreading to %s", Multithreading ? "true" : "false");
+	}
+	else
+	{
+		Log("No Config Entry for Multithreading found");
 	}
 
 	Log("CPP Config Loaded");
@@ -1199,6 +1207,13 @@ bool SC_Server::UpdateGameSpyServerReport(EGameSpyUpdateType type, const char* k
 	if (!pGSReport)
 		return false;
 
+	// SC: Fixme
+	if (true)
+	{
+		Log("Blocking UpdateGameSpyServerReport(\"%s\",\"%s\",%d)", key, value, index);
+		return true;
+	}
+
 	switch (type)
 	{
 	case EGameSpyUpdateType::eGSUpdate_Server:
@@ -1214,7 +1229,7 @@ bool SC_Server::UpdateGameSpyServerReport(EGameSpyUpdateType type, const char* k
 		break;
 
 	default:
-		Log("Unknown type specified to UpdateGameSpyServerReport(): %d", type);
+		Log("Unknown type specified to UpdateGameSpyServerReport(): %d", (int)type);
 		break;
 	}
 
@@ -1354,6 +1369,10 @@ void SC_Server::OnClientDisconnect(IGameRules* pGR, int channelId, int cause, co
 	else if (IEntity * pEntity = pActor->GetEntity())
 	{
 		GetEvents()->Call(SERVER_SCRIPT_EVENT_OnClientDisconnect, channelId, pEntity->GetScriptTable(), desc);
+	}
+	else
+	{
+		LogError("Client Connected: There is an Actor, but no Entity Attached!");
 	}
 }
 

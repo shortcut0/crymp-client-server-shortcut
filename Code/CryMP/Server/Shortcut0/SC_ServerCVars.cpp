@@ -53,6 +53,8 @@ void SC_ServerCVars::InitCVars(IConsole* pConsole)
 
 	// ---------------
 	// CVars
+	pConsole->Register("Server_LogVerbosity", &LogVerbosity, 0, 0, "Logging Verbosity");
+	
 
 	// TODO all of THESE
 
@@ -125,6 +127,10 @@ void SC_ServerCVars::ReleaseCVars()
 	IConsole* pConsole = gEnv->pConsole;
 
 	// ------------
+	pConsole->UnregisterVariable("Server_LogVerbosity", true);
+
+
+	// SC TODO: Delete these!!
 	pConsole->UnregisterVariable("filesave_debug", true);
 	pConsole->UnregisterVariable("astar_use_cache", true);
 	pConsole->UnregisterVariable("astar_callsLimit", true);

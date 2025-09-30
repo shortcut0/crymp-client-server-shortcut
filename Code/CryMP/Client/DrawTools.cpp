@@ -30,7 +30,18 @@ void DrawTools::OnUpdate()
 		}
 		else
 		{
-			gEnv->pRenderer->Draw2dImage(image.posX, image.posY, image.width, image.height, image.textureId, 0.0f, 1.0f, 1.0f, 0.0f);
+			const float alpha = image.color[3];
+			//gEnv->pRenderer->Draw2dImage(image.posX, image.posY, image.width, image.height, image.textureId, 0.0f, 1.0f, 1.0f, 0.0f);
+			gEnv->pRenderer->SetState(GS_BLSRC_SRCALPHA | GS_BLDST_ONEMINUSSRCALPHA | GS_NODEPTHTEST);
+			gEnv->pRenderer->Draw2dImage(
+				image.posX, image.posY,
+				image.width, image.height,
+				image.textureId,
+				//0.0f, 0.0f, 1.0f, 1.0f,  // correct UVs
+				0.0f, 1.0f, 1.0f, 0.0f,
+				0.0f,                    // angle
+				1.0f, 1.0f, 1.0f, alpha //1.0f   // r,g,b,a
+			);
 		}
 	}
 

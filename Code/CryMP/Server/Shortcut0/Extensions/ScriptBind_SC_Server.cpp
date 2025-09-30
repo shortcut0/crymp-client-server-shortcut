@@ -132,6 +132,7 @@ ScriptBind_SC_Server::ScriptBind_SC_Server()
 	SCRIPT_REG_FUNC(GetCPUUsage);
 	SCRIPT_REG_FUNC(GetCPUName);
 	SCRIPT_REG_TEMPLFUNC(GetPMCInfo, "id");
+
 }
 
 // -------------------------------------

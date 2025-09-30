@@ -227,6 +227,10 @@ public:
 	{
 		return false; // We have our own handler!
 	}
+	bool ChatLog(EChatMessageType type, EntityId senderId, EntityId targetId, const char* msg)
+	{
+		return false; // We have our own handler!
+	}
 	bool LogScriptErrors()
 	{
 		return m_ScriptLogErrors;
@@ -235,6 +239,23 @@ public:
 	bool CanActorPickUpItem(EntityId ownerId, EntityId itemId, bool isObjectGrab);
 	bool CanActorUseItem(EntityId ownerId, EntityId itemId);
 	void OnWallJump(EntityId ownerId, EntityId weaponId);
+
+	bool CheckRMIRequest(RMIRequest& pRequest)
+	{
+		return GetAC()->CheckOwnerRequest(pRequest);
+	}
+
+	bool CheckMeleeRequest(IEntity* pClient, IEntity *pFists)
+	{
+		return GetEvents()->Call(SERVER_SCRIPT_EVENT_OnMelee, ScriptHandle(pClient->GetId()), ScriptHandle(pFists->GetId()));
+	}
+	
+
+	bool CheckRadioRequest(INetChannel * pNetChannel, EntityId sourceId, uint8 msg)
+	{
+		return GetEvents()->Call(SERVER_SCRIPT_EVENT_OnRadio, m_pGameFramework->GetGameChannelId(pNetChannel), ScriptHandle(sourceId), msg);
+	}
+
 	// ------------------------------
 
 	enum class PostInitEntityTypes {

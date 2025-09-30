@@ -26,6 +26,9 @@ public:
 
     // Shortcut0
     // Added empty functions here
+    bool CheckRadioRequest(INetChannel*pNetChnl,EntityId senderId,uint8 msg) { return true; };
+    bool CheckMeleeRequest(IEntity*pClient,IEntity*pFists) { return true; };
+    bool ChatLog(EChatMessageType type, EntityId senderId, EntityId targetId, const char* msg) { return false; };
     void OnClientEnteredGame(IGameRules* pGR, int channelId, bool isReset) { return ; };
     void OnClientDisconnect(IGameRules* pGR, int channelId, int cause, const char* desc) { return ; };
     bool CanStartNextLevel() { return true;};

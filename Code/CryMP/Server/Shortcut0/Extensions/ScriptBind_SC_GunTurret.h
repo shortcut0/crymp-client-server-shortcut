@@ -27,6 +27,8 @@ public:
 	int SetLookAt(IFunctionHandler* pH, float yaw, float pitch);
 	int ResetLookAt(IFunctionHandler* pH);
 	int ResetProperties(IFunctionHandler* pH);
+	int OnTargetLocked(IFunctionHandler* pH);
+	int ChangeTargetTo(IFunctionHandler* pH);
 
 	// ==============================
 	void AttachTo(IEntity* pGunTurret);

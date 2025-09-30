@@ -1765,15 +1765,24 @@ void CGunTurret::ServerUpdate(SEntityUpdateContext& ctx, int update)
 
 	
 	bool SCFireTimeOk = m_SC_WantFireTime == -1 || gEnv->pTimer->GetCurrTime() < m_SC_WantFireTime;
+	bool SCFireTimeSecOk = m_SC_WantFireTimeSec == -1 || gEnv->pTimer->GetCurrTime() < m_SC_WantFireTimeSec;
 	if (!SCFireTimeOk)
 	{
 		m_SC_WantFire = false;
-		m_SC_WantFireSec = false;
+		//m_SC_WantFireSec = false;
 		m_SC_WantFireTime = -1.f;
+		//m_SC_WantFireTimeSec = -1.f;
+	}
+	if (!SCFireTimeSecOk)
+	{
+		//m_SC_WantFire = false;
+		m_SC_WantFireSec = false;
+		//m_SC_WantFireTime = -1.f;
+		m_SC_WantFireTimeSec = -1.f;
 	}
 
 	mg |= m_SC_WantFire && SCFireTimeOk;
-	rocket |= m_SC_WantFireSec && SCFireTimeOk;
+	rocket |= m_SC_WantFireSec && SCFireTimeSecOk;
 
 	if (m_fm && mg != IsFiring(false))
 	{

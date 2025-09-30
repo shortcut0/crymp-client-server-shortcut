@@ -199,11 +199,30 @@ void CC4Projectile::Stick(EventPhysCollision* pCollision)
 				}
 
 				// SC Fixme (Replace with stick to entity!)
+				
 				if (StickToCharacter(true, pTargetEntity))
 				{
 					GetGameObject()->SetAspectProfile(eEA_Physics, ePT_None);
 					m_stuck = true;
 				}
+				else
+				{
+					Matrix34 mat = pTargetEntity->GetWorldTM();
+					mat.Invert();
+					Matrix33 rotMat = Matrix33::CreateOrientation(mat.TransformVector(-pCollision->n), GetEntity()->GetWorldTM().TransformVector(Vec3(0, 0, 1)), g_PI);
+					m_localChildPos = mat.TransformPoint(pCollision->pt);
+					m_localChildRot = Quat(rotMat);
+
+					mat.SetIdentity();
+					mat.SetRotation33(rotMat);
+					mat.SetTranslation(m_localChildPos);
+
+					//Dephysicalize and stick
+					m_parentEntity = pTargetEntity->GetId();
+					GetGameObject()->SetAspectProfile(eEA_Physics, ePT_StuckToEntity);
+					StickToEntity(pTargetEntity, mat);
+				}
+
 				m_notStick = true;
 				return;
 			}
@@ -328,8 +347,8 @@ bool CC4Projectile::StickToCharacter(bool stick, IEntity* pActor)
 	//if(c4ToChar.Dot(charOrientation)>0.0f)
 		//pAttachment = pAttachmentManager->GetInterfaceByName("c4_back");
 	//else
-	pAttachment = pAttachmentManager->GetInterfaceByName("c4_front");
 
+	pAttachment = pAttachmentManager->GetInterfaceByName("c4_front");
 	if (!pAttachment)
 	{
 		CryLogWarning("No c4 face attachment found in actor");

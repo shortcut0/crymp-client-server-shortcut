@@ -902,8 +902,13 @@ IMPLEMENT_RMI(CGameRules, ClForbiddenAreaWarning)
 
 IMPLEMENT_RMI(CGameRules, SvRequestRadioMessage)
 {
-	SendRadioMessage(params.sourceId, params.msg);
 
+	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->CheckRadioRequest(pNetChannel, params.sourceId, params.msg))
+	{
+		return true;
+	}
+
+	SendRadioMessage(params.sourceId, params.msg);
 	return true;
 }
 
