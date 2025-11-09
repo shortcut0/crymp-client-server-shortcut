@@ -3981,7 +3981,7 @@ void CGameRules::NextLevel()
 		return;
 
 	// Shortcut0
-	if (ISSM* pSSM = g_pGame->GetSSM(); !pSSM->CanStartNextLevel())
+	if (ISSM* pSSM = g_pGame->GetSSM(); pSSM && !pSSM->CanStartNextLevel())
 	{
 		return;
 	}

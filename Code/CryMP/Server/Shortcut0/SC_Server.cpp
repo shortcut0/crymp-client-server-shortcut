@@ -859,7 +859,6 @@ void SC_Server::InitScript(bool PostInitialize) {
 	bool Success(false);
 
 
-
 	m_ScriptInitialized = Success; // for event handler
 	m_ScriptInitialized = (GetEvents()->Get((PostInitialize ? "Server.PostInitialize" : "Server.Initialize"), Success) && Success);
 
@@ -867,8 +866,6 @@ void SC_Server::InitScript(bool PostInitialize) {
 	{
 		return LogError("Failed to %sInitialize the Script!", PostString);
 	}
-
-
 
 	if (PostInitialize)
 	{
@@ -1188,7 +1185,8 @@ void SC_Server::OnEvent(IEntity* pEntity, SEntityEvent& event)
 // -------------------------------------
 void SC_Server::OnScriptError(const std::string& error)
 {
-	if (true || IsLuaReady())
+	bool dbg = false;
+	if (dbg || IsLuaReady())
 	{
 		m_pSS->SetGlobalValue("SCRIPT_ERROR", true);
 		GetEvents()->Call(SERVER_SCRIPT_EVENT_OnScriptError, error.c_str());
